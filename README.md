@@ -114,6 +114,7 @@ Result array structure:
 
 	Array
 		|--[location.id.1]
+		|			|
 		|			|--[children]   ezp5 search service result array of objects
 		|			|
 		|			|--[count]
@@ -122,6 +123,7 @@ Result array structure:
 		|
 		|
 		|--[location.id.2]
+		|			|
 		|			|-- ...
 		|			.
 		|			.
