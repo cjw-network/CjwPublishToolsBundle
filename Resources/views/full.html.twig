@@ -1,0 +1,39 @@
+{# this is an usage example, use an override for customizing #}
+
+{% extends site_bundle_name ~ '::pagelayout.html.twig' %}
+
+{% block content %}
+    <div class="class-{{ content.contentInfo.contentTypeId }} content-view-full">
+        <h1 class="content-header">{{ ez_content_name( content ) }}</h1>
+
+        {% if content.fields.short_description is defined and not ez_is_field_empty( content, 'short_description' ) %}
+            {{ ez_render_field( content, 'short_description' ) }}
+        {% endif %}
+
+        {% set listLimit = 10 %}
+        {% set listOffset = 0 %}
+        {% if ezpublish.viewParameters().offset is defined %}
+            {% set listOffset = ezpublish.viewParameters().offset %}
+        {% endif %}
+        {% set listChildren = cjw_fetch_content( [ location.id ], { 'depth': '1',
+                                                                    'limit': listLimit,
+                                                                    'offset': listOffset,
+                                                                    'include': [ 'folder', 'article' ],
+                                                                    'datamap': false,
+                                                                    'count': true } ) %}
+        {% set listCount = listChildren[location.id]['count'] %}
+
+        <div class="content-view-children">
+            {% for child in listChildren[location.id]['children'] %}
+                {{ render( controller( "ez_content:viewLocation", {'locationId': child.contentInfo.mainLocationId, 'viewType': 'line'} ) ) }}
+            {% endfor %}
+        </div>
+
+        {% if listCount > listLimit %}
+            {% include (site_bundle_name ~ ':parts:navigator.html.twig') with { 'page_uri': ezpublish.requestedUriString(),
+                                                                                'item_count': listCount,
+                                                                                'view_parameters': ezpublish.viewParameters(),
+                                                                                'item_limit': listLimit } %}
+        {% endif %}
+    </div>
+{% endblock %}

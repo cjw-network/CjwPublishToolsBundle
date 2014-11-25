@@ -1,0 +1,5 @@
+{# this is an usage example, use an override for customizing #}
+
+{% if content.fields.file is defined %}
+    {{cjw_content_download_file( content.fields.file[cjw_lang_get_default_code()] )}}
+{% endif %}

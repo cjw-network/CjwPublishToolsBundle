@@ -1,0 +1,14 @@
+#should be in site bundle!!!
+#parameters:
+#    # override default ez ViewController - set TTL from twig template possible
+#    ezpublish.controller.content.view.class: Cjw\PublishToolsBundle\Controller\Content\CjwPublishToolsViewController
+
+services:
+    cjw.publishtools.service.functions:
+        class: Cjw\PublishToolsBundle\Services\PublishToolsService
+        arguments: [@ezpublish.api.repository]
+    cjw.publishtools.twig.functions:
+        class: Cjw\PublishToolsBundle\Services\TwigFunctionsService
+        arguments: [@cjw.publishtools.service.functions]
+        tags:
+            - { name: twig.extension }

@@ -1,0 +1,33 @@
+{# this is an usage example, use an override for customizing #}
+
+{% if location.id is defined %}
+    {% set breadcrumb = cjw_breadcrumb( location.id, { 'offset': '1',
+                                           'rootName': 'Home',
+                                           'separator': '->' } ) %}
+    <ul id="breadcrumb">
+        {% for item in breadcrumb.items %}
+            <li class="breadcrumb-item inline">
+                {% if loop.first == false and breadcrumb.separator != '' %}
+                    <span class="breadcrumb-sep">{{ breadcrumb.separator }}</span> 
+                {% endif %}
+                {% if loop.last %}
+                    {{ item.name }}
+                {% endif %}
+                {% if loop.last == false %}
+                    <a href="{{ path( 'ez_urlalias', { 'locationId': item.locationId} ) }}">{{ item.name }}</a>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% elseif ezpublish.systemUriString == '/login' %}
+    <ul id="breadcrumb">
+        <li class="breadcrumb-item inline"><a href="/">Home</a></li>
+        <li class="breadcrumb-item inline">
+            <span class="breadcrumb-sep">-></span> Login
+        </li>
+    </ul>
+{% else %}
+    <ul id="breadcrumb">
+        <li class="breadcrumb-item inline">&nbsp;</li>
+    </ul>
+{% endif %}

@@ -1,0 +1,82 @@
+{# this is an usage example, use an override for customizing #}
+
+{# ToDo: Tests and remove bugs #}
+
+{% set page_count = ( item_count / item_limit )|round( 0, 'ceil' ) %}
+
+{% if page_count > 1 %}
+    {% set left_max = 7 %}
+    {% set right_max = 6 %}
+    {% set view_parameter_text = '' %}
+    {% set offset_text = '/(offset)/' %}
+    {% set offset = 0 %}
+
+    {% if view_parameters.offset is defined %}
+        {% set offset = view_parameters.offset %}
+    {% endif %}
+
+    {% set current_page = min( [page_count, ([offset, 0]|first/item_limit)|round(0, 'ceil')] ) %}
+    {% set item_previous = ( current_page * item_limit ) - item_limit %}
+    {% set item_next = ( current_page * item_limit ) + item_limit %}
+    {% set left_length = min( [current_page, left_max] ) %}
+    {% set right_length = max( [min( [(page_count-current_page-1), right_max] ), 0] ) %}
+{# ToDo
+    {* Create view parameter text with the exception of offset *}
+    {section loop=$view_parameters}
+     {section-exclude match=eq($:key,offset)}
+     {section-exclude match=$:item|not}
+     {set view_parameter_text=concat(view_parameter_text,'/(',$:key,')/',$:item)}
+    {/section}
+#}
+    <div class="navigator">
+        <div style="float:left;">
+            <p>
+                {% if item_previous >= 0 %}
+                    <a href="{{page_uri}}{{offset_text}}{{item_previous}}{{view_parameter_text}}">&laquo;&nbsp;Previous|i18n</a>
+                {% endif %}
+            </p>
+        </div>
+
+        <div style="float:right">
+            <p>
+                {% if item_next < item_count %}
+                    <a href="{{page_uri}}{{offset_text}}{{item_next}}{{view_parameter_text}}">Next|i18n&nbsp;&raquo;</a>
+                {% endif %}
+            </p>
+        </div>
+
+        <div style="text-align:center;">
+            <p>
+                {% if current_page > left_max %}
+                    <a href="{{page_uri}}{{view_parameter_text}}">1</a>
+                    {% if (current_page-left_length) > 1 %}
+                        &nbsp; ...
+                    {% endif %}
+                {% endif %}
+
+                {% if left_length > 0 %}
+                    {% for index in 0..left_length-1 %}
+                        {% set page_offset = (current_page-left_length)+index %}
+                        &nbsp; <a href="{{page_uri}}{{offset_text}}{{page_offset*item_limit}}{{view_parameter_text}}">{{page_offset+1}}</a>
+                    {% endfor %}
+                {% endif %}
+
+                &nbsp; {{current_page+1}}
+
+                {% if right_length > 0 %}
+                    {% for index in 0..right_length-1 %}
+                        {% set page_offset = current_page+1+index %}
+                        &nbsp; <a href="{{page_uri}}{{offset_text}}{{page_offset*item_limit}}{{view_parameter_text}}">{{page_offset+1}}</a>
+                    {% endfor %}
+                {% endif %}
+
+                {% if page_count > (current_page+right_max+1) %}
+                    {% if (current_page+right_max+2) < page_count %}
+                         &nbsp; ...
+                    {% endif %}
+                    &nbsp; <a href="{{page_uri}}{{offset_text}}{{(page_count-1)*item_limit}}{{view_parameter_text}}">{{page_count}}</a>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+{% endif %}

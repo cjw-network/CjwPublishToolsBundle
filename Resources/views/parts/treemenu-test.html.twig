@@ -1,0 +1,50 @@
+<div class="treemenu">
+    {% if location.id is defined %}
+        {% set locationId = location.id %}
+    {% else %}
+        {% set locationId = locationid_treeroot %}
+    {% endif %}
+
+    {% set treemenu = cjw_treemenu( locationId, { 'depth': '2',
+                                                  'offset': '1',
+                                                  'include': [ 'article', 'folder' ],
+                                                  'sortby': { 'LocationPriority': 'ASC' },
+                                                  'datamap': false } ) %}
+
+    <h2>Treemenu</h2>
+    {% spaceless %}
+    <ul class="level1">
+        {% set expanded = false %}
+        {% for item in treemenu %}
+            {% if item.node is defined%}
+                {% set selected = '' %}
+                {% if item.selected or locationId == item.node.id %}
+                    {% set selected = ' selected' %}
+                {% endif %}
+
+                        <li class="level{{item.level}}{{selected}}">
+                            <div class="spacer level{{item.level}}{{selected}}">
+                                <a class="level{{item.level}}{{selected}}" href="{{ path( 'ez_urlalias', {'locationId': item.node.contentInfo.mainLocationId} ) }}">
+                                    {{ item.node.contentInfo.name }}
+                                    {#{ ez_content_name( item ) }#}
+                                </a>
+
+                {% if item.level >= 1 and item.selected == 1 and item.children > 0 %}
+                    {% set expanded = true %}
+                    <ul class="spacer level{{item.level}}{{selected}}">
+                {% else %}
+                            </div>
+                        </li>
+                {% endif %}
+
+                {% if item.level >= 2 and item.last == 1 and expanded %}
+                    {% set expanded = false %}
+                    </ul>
+                            </div>
+                        </li>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    </ul>
+    {% endspaceless %}
+</div>

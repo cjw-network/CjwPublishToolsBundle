@@ -1,0 +1,3 @@
+{% for lang in ezpublish.availableLanguages %}
+    <a href="/{{ lang|slice(0, 3) }}/">{{ lang }}</a>
+{% endfor %}

@@ -1,0 +1,11 @@
+<div class="class-{{ content.contentInfo.contentTypeId }} content-view-line">
+    <h2>
+        <a href="{{ path( 'ez_urlalias', {'locationId': content.contentInfo.mainLocationId} ) }}">
+            {{ ez_content_name( content ) }}
+        </a>
+    </h2>
+
+    {% if content.fields.short_description is defined and not ez_is_field_empty( content, 'short_description' ) %}
+        {{ ez_render_field( content, 'short_description' ) }}
+    {% endif %}
+</div>
