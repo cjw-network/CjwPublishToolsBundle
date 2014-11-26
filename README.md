@@ -20,7 +20,29 @@ This Bundle is **Work in progress**.
 **full Documentation can be found at: [www.cjw-network.com](http://www.cjw-network.com)**
 
 ------------------------------------
+**Why CJW Publish Tools Bundle?**
 
+There are two types of technical eZ Publish user:
+
+1. A developer / programmer
+    + speaks fluent PHP
+    + no problems with digging into symfony
+    + used to think in extensions / components
+2. An integrator
+    + comes from front end design and speaks fluent HTML and CSS
+    + no problems with digging into template languages
+    + prefer solutions with all needed functionality
+
+eZ Publish legacy was perfect for both types of users, eZ Publish 5 on Symfony stack is perfect only for the first type. But this we’ll start to change, we try to set a starting point to give back eZ Publish one of its Unique Selling Proposition (USP): Build eCMS Solutions for developers and integrators. By the way we show the power of the Symfony stack integrations.
+
+The “philosophical” thought behind this: Focussing on the big picture and don’t get lost in the little things. 
+
+You need for every website a search and human friendly HTML title, a breadcrumb navigation, one or multiple menus, a list of children of a location or a pagination. And you need it fast and easy, in template and in PHP.
+
+Discussion to this topic: [http://share.ez.no/forums/ez-publish-5-platform/ez-publish-5-and-web-integrators](http://share.ez.no/forums/ez-publish-5-platform/ez-publish-5-and-web-integrators)
+
+
+------------------------------------
 **Installation**:
 
 - Download bundle
