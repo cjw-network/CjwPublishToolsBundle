@@ -1,0 +1,15 @@
+register:
+    path:     /register
+    defaults: { _controller: CjwPublishToolsBundle:Formular:userRegister }
+
+formbuilder:
+    pattern:  /form/{identifier}
+    defaults: { _controller: CjwPublishToolsBundle:Formular:formBuilder }
+
+frontend_editing_edit:
+    pattern:  /content/edit/{locationid}
+    defaults: { _controller: CjwPublishToolsBundle:Formular:editForm }
+
+frontend_editing_add:
+    pattern:  /content/add/{locationid}/{contenttypeid}
+    defaults: { _controller: CjwPublishToolsBundle:Formular:addForm }

@@ -18,3 +18,16 @@ services:
         class: Twig_Extensions_Extension_Text
         tags:
             - { name: twig.extension }
+
+    cjw.publishtools.formbuilder.functions:
+        class: Cjw\PublishToolsBundle\Services\FormBuilderService
+        arguments: ['@service_container']
+    cjw.publishtools.formhandler.functions:
+        class: Cjw\PublishToolsBundle\Services\FormHandlerService
+        arguments: ['@service_container','@doctrine.orm.entity_manager','@mailer','@templating',@cjw.publishtools.formbuilder.functions]
+
+#   define db tables as services
+    db_table_ezinfocollection:
+        class: Cjw\PublishToolsBundle\Entity\Ezinfocollection
+    db_table_ezinfocollection_attribute:
+        class: Cjw\PublishToolsBundle\Entity\EzinfocollectionAttribute
