@@ -169,6 +169,17 @@ class PublishToolsService
     }
 
     /**
+     * Fetch content by contentId.
+     *
+     * @param integer $contentId
+     * @return \eZ\Publish\API\Repository\Values\Content\Content
+     */
+    public function loadContentById( $contentId )
+    {
+        return $this->contentService->loadContent( $contentId );
+    }
+
+    /**
      * Returns list of locations under given parent location
      *
      * @param array $locationIdArr
@@ -176,9 +187,9 @@ class PublishToolsService
      *
      * @return array
      */
-    public function fetchLocationListArr( array $locationIdArr = array(), array $params = [] )
+    public function fetchLocationListArr( array $locationIdArr = array(), array $params = array() )
     {
-        $locationListArr = [];
+        $locationListArr = array();
 
         foreach ( $locationIdArr as $locationId )
         {
@@ -188,7 +199,7 @@ class PublishToolsService
             {
                 $locationList = $this->fetchSubtree( $locationObj, $params );
 
-                $locationListArr[$locationId] = [];
+                $locationListArr[$locationId] = array();
 
                 $locationListArr[$locationId]['parent'] = false;
                 $locationListArr[$locationId]['children'] = $locationList['searchResult'];
@@ -200,11 +211,11 @@ class PublishToolsService
             {
                 if ( isset( $params['datamap'] ) && $params['datamap'] === true )
                 {
-                    $locationListArr[$locationId] = [ $this->contentService->loadContent( $locationObj->contentInfo->id ) ];
+                    $locationListArr[$locationId] = array( $this->contentService->loadContent( $locationObj->contentInfo->id ) );
                 }
                 else
                 {
-                    $locationListArr[$locationId] = [ $locationObj ];
+                    $locationListArr[$locationId] = array( $locationObj );
                 }
             }
         }
@@ -220,18 +231,18 @@ class PublishToolsService
      *
      * @return array
      */
-    private function fetchSubtree( $locationObj, array $params = [] )
+    private function fetchSubtree( $locationObj, array $params = array() )
     {
-        $locationList = [];
+        $locationList = array();
         $depth = $locationObj->depth + $params['depth'];
 
         // http://share.ez.no/blogs/thiago-campos-viana/ez-publish-5-tip-search-cheat-sheet
-        $criterion = [
+        $criterion = array(
             new Criterion\Visibility( Criterion\Visibility::VISIBLE ),
             new Criterion\Subtree( $locationObj->pathString ),
             new Criterion\Location\Depth( Criterion\Operator::GT, $locationObj->depth ),
             new Criterion\Location\Depth( Criterion\Operator::LTE, $depth )
-        ];
+        );
 
         if ( isset( $params['include'] ) && is_array( $params['include'] ) && count( $params['include'] ) > 0 )
         {
@@ -252,7 +263,7 @@ class PublishToolsService
             $limit = $params['limit'];
         }
 
-        $sortClauses = [];
+        $sortClauses = array();
         if ( isset( $params['sortby'] ) && is_array( $params['sortby'] ) && count( $params['sortby'] ) > 0 )
         {
             foreach ( $params['sortby'] as $sortField => $sortOrder )
@@ -268,8 +279,6 @@ class PublishToolsService
         else
         {
             // default sort by parent object sort clause
-            $sortClauses[] = new SortClause\Location\Path();
-// ToDo: ist folgende Zeile sinnvoll?
             $sortClauses[] = $this->generateSortClauseFromId( $locationObj->sortField, $locationObj->sortOrder );
         }
 
@@ -290,13 +299,13 @@ class PublishToolsService
         $searchCount = false;
         if ( isset( $params['count'] ) && $params['count'] === true )
         {
-            $queryCount = new LocationQuery( [] );
+            $queryCount = new LocationQuery( array() );
             $queryCount->criterion = new Criterion\LogicalAnd( $criterion );
             $queryCount->sortClauses = $sortClauses;
             $searchCount = $this->searchService->findLocations( $queryCount )->totalCount;
         }
 
-        $querySearch = new LocationQuery( [ 'offset' => $offset, 'limit' => $limit ] );
+        $querySearch = new LocationQuery( array( 'offset' => $offset, 'limit' => $limit ) );
         $querySearch->criterion = new Criterion\LogicalAnd( $criterion );
         $querySearch->sortClauses = $sortClauses;
         $searchResult = $this->searchService->findLocations( $querySearch );
@@ -315,7 +324,7 @@ class PublishToolsService
             }
         }
 
-        return [ 'searchResult' => $locationList, 'searchCount' => $searchCount ];
+        return array( 'searchResult' => $locationList, 'searchCount' => $searchCount );
     }
 
     /**

@@ -7,8 +7,14 @@ services:
     cjw.publishtools.service.functions:
         class: Cjw\PublishToolsBundle\Services\PublishToolsService
         arguments: [@ezpublish.api.repository]
+
     cjw.publishtools.twig.functions:
         class: Cjw\PublishToolsBundle\Services\TwigFunctionsService
         arguments: [@cjw.publishtools.service.functions]
+        tags:
+            - { name: twig.extension }
+
+    twig.extension.text:
+        class: Twig_Extensions_Extension_Text
         tags:
             - { name: twig.extension }

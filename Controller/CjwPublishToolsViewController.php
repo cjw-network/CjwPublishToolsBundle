@@ -9,7 +9,7 @@
  *
  */
 
-namespace Cjw\PublishToolsBundle\Controller\Content;
+namespace Cjw\PublishToolsBundle\Controller;
 
 use eZ\Publish\Core\MVC\Symfony\Controller\Content\ViewController;
 use Symfony\Component\HttpFoundation\Response;

@@ -14,7 +14,7 @@ namespace Cjw\PublishToolsBundle\Services;
 class TwigFunctionsService extends \Twig_Extension
 {
     /**
-     * @var \Cjw\PublishTools\Services\PublishToolsService
+     * @var \Cjw\PublishToolsBundle\Services\PublishToolsService
      */
     protected $PublishToolsService;
 
@@ -37,6 +37,7 @@ class TwigFunctionsService extends \Twig_Extension
             new \Twig_SimpleFunction( 'cjw_cache_set_ttl', array( $this, 'setCacheTtl' ) ),
             new \Twig_SimpleFunction( 'cjw_breadcrumb', array( $this, 'getBreadcrumb' ) ),
             new \Twig_SimpleFunction( 'cjw_treemenu', array( $this, 'getTreemenu' ) ),
+            new \Twig_SimpleFunction( 'cjw_load_content_by_id', array( $this, 'loadContentById' ) ),
             new \Twig_SimpleFunction( 'cjw_fetch_content', array( $this, 'fetchContent' ) ),
             new \Twig_SimpleFunction( 'cjw_user_get_current', array( $this, 'getCurrentUser' ) ),
             new \Twig_SimpleFunction( 'cjw_lang_get_default_code', array( $this, 'getDefaultLangCode' ) ),
@@ -104,7 +105,7 @@ class TwigFunctionsService extends \Twig_Extension
      */
     public function getTreemenu( $locationId = 0, array $params = array() )
     {
-        $menuArr = [];
+        $menuArr = array();
 
         $depth = 1;
         if ( isset( $params['depth'] ) && $params['depth'] > 1 )
@@ -136,19 +137,19 @@ class TwigFunctionsService extends \Twig_Extension
             $sortby = $params['sortby'];
         }
 
-        $pathArr = $this->PublishToolsService->getPathArr( $locationId, ['offset' => $offset] );
+        $pathArr = $this->PublishToolsService->getPathArr( $locationId, array( 'offset' => $offset ) );
 
         $depthCounter = 1;
         foreach( $pathArr['items'] as $location )
         {
             $result = $this->PublishToolsService->fetchLocationListArr(
-                [$location['locationId']], ['depth' => 1, 'include' => $include, 'datamap' => $datamap, 'sortby' => $sortby]
+                array( $location['locationId'] ), array( 'depth' => 1, 'include' => $include, 'datamap' => $datamap, 'sortby' => $sortby )
             );
 
             $insertArr = $result[$location['locationId']]['children'];
 
             // add first, last and level info
-            $insertArrNew = [];
+            $insertArrNew = array();
             $lastCounter = 0;
             $firstToggle = 1;
             foreach( $insertArr as $child )
@@ -158,12 +159,12 @@ class TwigFunctionsService extends \Twig_Extension
                     $firstToggle = 0;
                 }
 
-                $insertArrNew[] = [ 'node' => $child,
-                                    'level' => $depthCounter,
-                                    'selected' => 0,
-                                    'children' => 0,
-                                    'first' => $firstToggle,
-                                    'last' => 0 ];
+                $insertArrNew[] = array( 'node' => $child,
+                                         'level' => $depthCounter,
+                                         'selected' => 0,
+                                         'children' => 0,
+                                         'first' => $firstToggle,
+                                         'last' => 0 );
                 $lastCounter++;
             }
             if( count( $insertArrNew ) )
@@ -186,8 +187,12 @@ class TwigFunctionsService extends \Twig_Extension
                 }
             }
 
-            // http://stackoverflow.com/questions/3797239/insert-new-item-in-array-on-any-position-in-php
-            array_splice( $menuArr, $insertPosition, 0, $insertArrNew );
+            // if no insert position found (location is not part of menu tree), show top menu entries only
+            if ( $insertPosition > 0 || $depthCounter == 1)
+            {
+                // http://stackoverflow.com/questions/3797239/insert-new-item-in-array-on-any-position-in-php
+                array_splice( $menuArr, $insertPosition, 0, $insertArrNew );
+            }
 
             $depthCounter++;
             if( $depthCounter > $depth )
@@ -197,6 +202,18 @@ class TwigFunctionsService extends \Twig_Extension
         }
 
         return $menuArr;
+    }
+
+    /**
+     * Fetch content by contentId.
+     *
+     * @param integer $contentId
+     * @return \eZ\Publish\API\Repository\Values\Content\Content
+     */
+    public function loadContentById( $contentId )
+    {
+        $content = $this->PublishToolsService->loadContentById( $contentId );
+        return $content;
     }
 
     /**
