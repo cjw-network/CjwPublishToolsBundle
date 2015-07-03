@@ -1,0 +1,2 @@
+20150703 - PublishToolsService umbenannt von "cjw.publishtools" zu "cjw_publishtools"
+         - Formbuilder-Config-Datei kann jetzt per YAML-Parameter angegeben werden; Fallback in PublishTools config
