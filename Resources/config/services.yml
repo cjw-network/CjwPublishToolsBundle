@@ -1,16 +1,36 @@
 #should be in site bundle!!!
-#parameters:
+parameters:
 #    # override default ez ViewController - set TTL from twig template possible
 #    ezpublish.controller.content.view.class: Cjw\PublishToolsBundle\Controller\Content\CjwPublishToolsViewController
 
-services:
-    cjw.publishtools.service.functions:
-        class: Cjw\PublishToolsBundle\Services\PublishToolsService
-        arguments: [@ezpublish.api.repository]
+    # Default error template, which will be loaded if the ExceptionListener catches an exception
+    # Siteaccess aware so we can define a custom error tpl
+    # cjw_publishtools.{SiteAccess}.eventlistener.exception.template: MyBundle:Folder:errer.html.twig
+    cjw_publishtools.default.eventlistener.exception.template: CjwPublishToolsBundle:exception:error.html.twig
 
-    cjw.publishtools.twig.functions:
+    # Filepath + -name for formbuilder Config, from EZROOT directory
+    cjw_publishtools.default.formbuilder.config_file: src/Cjw/PublishToolsBundle/Resources/config/formbuilder.example.yml
+
+services:
+    cjw_publishtools.service.functions:
+        class: Cjw\PublishToolsBundle\Services\PublishToolsService
+        arguments: ['@ezpublish.api.repository', '@ezpublish.config.resolver']
+
+    cjw_publishtools.twig.functions:
         class: Cjw\PublishToolsBundle\Services\TwigFunctionsService
-        arguments: [@cjw.publishtools.service.functions]
+        arguments: [@cjw_publishtools.service.functions]
+        tags:
+            - { name: twig.extension }
+
+    cjw_publishtools.twig.content.functions:
+        class: Cjw\PublishToolsBundle\Services\TwigContentFunctionsService
+        arguments: [@service_container, @ezpublish.api.repository, @ezpublish.config.resolver, @?logger]
+        tags:
+            - { name: twig.extension }
+
+    cjw_publishtools.twig.config.functions:
+        class: Cjw\PublishToolsBundle\Services\TwigConfigFunctionsService
+        arguments: ['@service_container', '@ezpublish.config.resolver']
         tags:
             - { name: twig.extension }
 
@@ -19,15 +39,25 @@ services:
         tags:
             - { name: twig.extension }
 
-    cjw.publishtools.formbuilder.functions:
+    cjw_publishtools.formbuilder.functions:
         class: Cjw\PublishToolsBundle\Services\FormBuilderService
-        arguments: ['@service_container']
-    cjw.publishtools.formhandler.functions:
+        arguments: ['@service_container', "$formbuilder.config_file;cjw_publishtools$"]
+    cjw_publishtools.formhandler.functions:
         class: Cjw\PublishToolsBundle\Services\FormHandlerService
-        arguments: ['@service_container','@doctrine.orm.entity_manager','@mailer','@templating',@cjw.publishtools.formbuilder.functions]
+        arguments: ['@service_container','@doctrine.orm.entity_manager','@mailer','@templating',@cjw_publishtools.formbuilder.functions]
 
 #   define db tables as services
     db_table_ezinfocollection:
         class: Cjw\PublishToolsBundle\Entity\Ezinfocollection
     db_table_ezinfocollection_attribute:
         class: Cjw\PublishToolsBundle\Entity\EzinfocollectionAttribute
+
+#    cjw_publishtools.mobiledetect.library:
+#        class: Cjw\PublishToolsBundle\Services\MobileDetectService
+
+    # Show exceptions/errors in self defined template
+#    cjw_publishtools.eventlistener.exception:
+#        class: Cjw\PublishToolsBundle\EventListener\ExceptionListener
+#        arguments: [@templating, @kernel, "$eventlistener.exception.template;cjw_publishtools$"]
+#        tags:
+#            - { name: kernel.event_listener, event: kernel.exception, method: onKernelException }
