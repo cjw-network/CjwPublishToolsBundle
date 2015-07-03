@@ -55,9 +55,9 @@ ToDo: composer install
 
 ***
 
-The Bundle contains two services and some example templates.
+The Bundle contains three services and some example templates.
 
-The two services are a **TwigFunctionService** that provides some Twig Template Tags:
+The three services are a **TwigFunctionService** that provides some Twig Template Tags:
 
 - cjw_breadcrumb
 - cjw_treemenu
@@ -76,7 +76,8 @@ The two services are a **TwigFunctionService** that provides some Twig Template 
 - cjw_config_get_parameter
 - more tbd
 
-and the **PublishToolsService**. The service contains some helper functions and a "content fetch" function trying to emulate some features of the god old content fetch functions in eZ Publish 4.
+the FormBuilderService (some notes at the end of this readme) and the **PublishToolsService**.
+The **PublishToolsService** contains some helper functions and a "content fetch" function trying to emulate some features of the god old content fetch functions in eZ Publish 4.
 
 You can easily fetch content in twig templates and build Websites without hacking controller with PHP.
 
@@ -185,6 +186,6 @@ after:
 - formulars defined via content classes can use the ezpublish build in template override mechanism
 - easy to use frontend editing (add and edit content)
 - easy to use user register
-- programming php classes is not needed
+- hacking php classes is not needed
 
 
