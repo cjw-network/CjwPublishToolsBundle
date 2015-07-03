@@ -2,7 +2,7 @@
 /**
  * File containing the PublishToolsService class
  *
- * @copyright Copyright (C) 2007-2014 CJW Network - Coolscreen.de, JAC Systeme GmbH, Webmanufaktur. All rights reserved.
+ * @copyright Copyright (C) 2007-2015 CJW Network - Coolscreen.de, JAC Systeme GmbH, Webmanufaktur. All rights reserved.
  * @license http://ez.no/licenses/gnu_gpl GNU GPL v2
  * @version //autogentag//
  * @filesource
@@ -15,11 +15,16 @@ use eZ\Publish\API\Repository\Repository;
 use eZ\Publish\API\Repository\Values\Content\Query;
 use eZ\Publish\API\Repository\Values\Content\Query\SortClause;
 use eZ\Publish\API\Repository\Values\Content\Query\Criterion;
+//use eZ\Publish\API\Repository\Values\Content\Query\Criterion\Location;
 use eZ\Publish\API\Repository\Values\Content\Location;
 use eZ\Publish\API\Repository\Values\Content\LocationQuery;
+use eZ\Publish\Core\MVC\ConfigResolverInterface;
 
 /**
- * 
+ * PublishToolsService class.
+ *
+ * This class contains the main functionality for the PublishToolsService, which is bundled with the
+ * PublishToolsBundle.
  */
 class PublishToolsService
 {
@@ -54,10 +59,20 @@ class PublishToolsService
     protected $userService;
 
     /**
-     * @param \eZ\Publish\API\Repository
-     * @param \Psr\Log\LoggerInterface
+     * @var \eZ\Publish\API\Repository\ContentTypeService
      */
-    public function __construct( Repository $repository )
+    protected $contentTypeService;
+
+    /**
+     * @var \eZ\Publish\Core\MVC\ConfigResolverInterface
+     */
+    protected $configResolver;
+
+    /**
+     * @param \eZ\Publish\API\Repository\Repository $repository
+     * @param ConfigResolverInterface|\Psr\Log\LoggerInterface $resolver
+     */
+    public function __construct( Repository $repository, ConfigResolverInterface $resolver )
     {
         $this->repository = $repository;
         $this->searchService = $this->repository->getSearchService();
@@ -65,15 +80,37 @@ class PublishToolsService
         $this->contentService = $this->repository->getContentService();
         $this->languageService = $this->repository->getContentLanguageService();
         $this->userService = $this->repository->getUserService();
+        $this->contentTypeService = $this->repository->getContentTypeService();
+        $this->configResolver = $resolver;
     }
 
     /**
-     * Returns a list of locations for an given parent location (breadcrumb)
+     * Fetches a list of locations for a given parent location and returns them ready to be used for
+     * a breadcrumb navigation.
      *
-     * @param integer $locationId
-     * @param array $params
+     * @param integer $locationId ID of the location, whose children should be included in the
+     *                            returned path array.
+     * @param array $params The fetching parameters, which should be used to fetch the path arrays
+     *                      children from the location service – given as an array.
      *
-     * @return array
+     * The following default parameters are set:
+     * <pre>
+        array(
+            'offset'    => 0,
+            'rootName'  => false,
+            'separator' => ''
+        )
+     * </pre>
+     *
+     * @return array Path array containing the given (or default) separator and the fetched items.
+     *
+     * The array is defined like so:
+     * <pre>
+        array(
+            'items'     => array( ... !TODO! .. ),
+            'separator' => ''
+        );
+     * </pre>
      */
     public function getPathArr( $locationId = 0, array $params = array() )
     {
@@ -115,12 +152,19 @@ class PublishToolsService
                     }
                     else
                     {
-                        $name = $parentLocation->contentInfo->name;
+                        $contentId =  $parentLocation->contentInfo->id;
+                        $content = $this->loadContentById( $contentId );
+
+                        $translatedName = $content->versionInfo->getName();
+
+                        //$name = $parentLocation->contentInfo->name;
+                        $name = $translatedName;
                     }
 
                     $pathArr[$parentLocationId] = array(
                         'name' => $name,
-                        'locationId' => $parentLocationId
+                        'locationId' => $parentLocationId,
+                        'location' => $parentLocation
                     );
 
                     unset( $parentLocation );
@@ -135,19 +179,27 @@ class PublishToolsService
     }
 
     /**
-     * Returns the current user object
+     * Return the user object of the current user as well as an information, whether the user is
+     * logged in.
      *
-     * @return array
+     * @return array Array containing the user object and a boolean, whether the user is logged in.
+     * <pre>
+        array(
+            'content'  => Values\User\User object,
+            'isLogged' => false
+        )
+     * </pre>
      */
     public function getCurrentUser()
     {
         $currentUser = $this->repository->getCurrentUser();
 
         $result = array();
-        $result['versionInfo'] = $currentUser->versionInfo;
-        $result['content'] = $currentUser->content->fields;
+//        $result['versionInfo'] = $currentUser->versionInfo;
+        $result['content'] = $currentUser;
         $result['isLogged'] = false;
 
+        // TODO => deprecated function call *loadAnonymousUser()*
         $anonymousUserId = $this->userService->loadAnonymousUser()->content->versionInfo->contentInfo->id;
 
         if ( $anonymousUserId && $anonymousUserId != $currentUser->id )
@@ -182,8 +234,18 @@ class PublishToolsService
     /**
      * Returns list of locations under given parent location
      *
-     * @param array $locationIdArr
-     * @param array $params
+     * Note, that you have to set the *depth* parameter to "1" or higher, if you want to fetch
+     * children of objects.
+     *
+     * @param array $locationIdArr Plain array of location ID's, which should be used to fetch the
+     *                             location list array.
+     * @param array $params Parameters to control the fetch for the location list.
+     * <pre>
+        array(
+            'depth'   => integer,
+            'datamap' => boolean
+        )
+     * </pre>
      *
      * @return array
      */
@@ -195,7 +257,7 @@ class PublishToolsService
         {
             $locationObj = $this->locationService->loadLocation( $locationId );
 
-            if( isset( $params['depth'] ) && $params['depth'] > 0 )
+            if ( isset( $params['depth'] ) && $params['depth'] > 0 )
             {
                 $locationList = $this->fetchSubtree( $locationObj, $params );
 
@@ -224,7 +286,7 @@ class PublishToolsService
     }
 
     /**
-     * Returns a subtree for an location object
+     * Fetches a subtree for a given location object.
      *
      * @param mixed $locationObj
      * @param array $params
@@ -233,20 +295,80 @@ class PublishToolsService
      */
     private function fetchSubtree( $locationObj, array $params = array() )
     {
-        $locationList = array();
-        $depth = $locationObj->depth + $params['depth'];
+        $criterion = array();
 
-        // http://share.ez.no/blogs/thiago-campos-viana/ez-publish-5-tip-search-cheat-sheet
-        $criterion = array(
-            new Criterion\Visibility( Criterion\Visibility::VISIBLE ),
-            new Criterion\Subtree( $locationObj->pathString ),
-            new Criterion\Location\Depth( Criterion\Operator::GT, $locationObj->depth ),
-            new Criterion\Location\Depth( Criterion\Operator::LTE, $depth )
-        );
+        // ToDo: ignore visibility
+        $criterion[] = new Criterion\Visibility( Criterion\Visibility::VISIBLE );
+
+        $locationList = array();
+
+        // List fetch direct children
+        $paramDepth = 1;
+
+        if ( isset( $params['depth'] ) )
+        {
+            $paramDepth = (int) $params['depth'];
+        }
+
+        // list fetch use parentNodeId for faster fetch
+        if ( $paramDepth <= 1 )
+        {
+            $depth = $locationObj->depth + $paramDepth;
+            // http://share.ez.no/blogs/thiago-campos-viana/ez-publish-5-tip-search-cheat-sheet
+            $criterion[] = new Criterion\ParentLocationId( $locationObj->id );
+        }
+/*
+            // idee um 1 + 2 ebene ohne einen like fetch zu erhalten
+                //        elseif( $paramDepth == 2 )
+                //        {
+                //            $params2 = array();
+                //            $params2['depth'] = 1;
+                //            $params2['count'] = false;
+                //            $params2['datamap'] = false;
+                //
+                //            $locationDepth1Result = $this->fetchSubtree( $locationObj, $params2 );
+                //
+                //            $location1List = $locationDepth1Result['searchResult'];
+                //
+                //            $location1IdList = array();
+                //            foreach( $location1List as $location1 )
+                //            {
+                //                $location1IdList[] = $location1->id;
+                //            }
+                //          //  var_dump( $locationList );
+                //
+                //            $depth = $locationObj->depth + $paramDepth;
+                //            // http://share.ez.no/blogs/thiago-campos-viana/ez-publish-5-tip-search-cheat-sheet
+                //            $criterion = array(
+                //                new Criterion\Visibility( Criterion\Visibility::VISIBLE ),
+                //                new Criterion\ParentLocationId( $location1IdList ),
+                //            );
+                //
+                //        }
+*/
+        // use pathsting with like statement
+        else
+        {
+            $depth = $locationObj->depth + $paramDepth;
+            // http://share.ez.no/blogs/thiago-campos-viana/ez-publish-5-tip-search-cheat-sheet
+            $criterion[] = new Criterion\Subtree( $locationObj->pathString );
+            $criterion[] = new Criterion\Location\Depth( Criterion\Operator::GT, $locationObj->depth );
+            $criterion[] = new Criterion\Location\Depth( Criterion\Operator::LTE, $depth );
+        }
 
         if ( isset( $params['include'] ) && is_array( $params['include'] ) && count( $params['include'] ) > 0 )
         {
             $criterion[] = new Criterion\ContentTypeIdentifier( $params['include'] );
+
+// TODO get ID for Identifier and use this for search so we save a subrequest and its lots faster
+//            if ( in_array( 'article', $params['include'] ) )
+//            {
+//                $criterion[] = new Criterion\ContentTypeId( array( 16 ) );
+//            }
+//            else
+//            {
+//                $criterion[] = new Criterion\ContentTypeIdentifier( $params['include'] );
+//            }
         }
 
 // ToDo: role and rights, visibility, date, object states criterion
@@ -282,36 +404,96 @@ class PublishToolsService
             $sortClauses[] = $this->generateSortClauseFromId( $locationObj->sortField, $locationObj->sortOrder );
         }
 
+        /* vendor/ezsystems/ezpublish-kernel/eZ/Publish/API/Repository/Values/Content/Query/Criterion/Operator.php
+        abstract class Operator
+        {
+            const EQ = "=";
+            const GT = ">";
+            const GTE = ">=";
+            const LT = "<";
+            const LTE = "<=";
+            const IN = "in";
+            const BETWEEN = "between";
+            const LIKE = "like";
+            const CONTAINS = "contains";
+        }
+        */
+
+        if ( isset( $params['filter_relations'] ) && is_array( $params['filter_relations'] ) && count( $params['filter_relations'] ) > 0 )
+        {
+            foreach ( $params['filter_relations'] as $fieldCriterion )
+            {
+// todo check valid syntax
+                if ( is_array( $fieldCriterion ) && count( $fieldCriterion == 3 ) )
+                {
+                    $criterion[] = new Criterion\FieldRelation( $fieldCriterion['0'], $fieldCriterion['1'], $fieldCriterion['2'] );
+                }
+            }
+        }
+
+        if ( isset( $params['filter_fields'] ) && is_array( $params['filter_fields'] ) && count( $params['filter_fields'] ) > 0 )
+        {
+            foreach ( $params['filter_fields'] as $fieldCriterion )
+            {
+// todo check valid syntax
+                if ( is_array( $fieldCriterion ) && count( $fieldCriterion == 3 ) )
+                {
+                    // Attention! criterion field must set to be searchable
+                    $criterion[] = new Criterion\Field( $fieldCriterion['0'], $fieldCriterion['1'], $fieldCriterion['2'] );
+                }
+            }
+        }
+
         if ( isset( $params['language'] ) && is_array( $params['language'] ) && count( $params['language'] ) > 0 )
         {
-            // ToDo: combine with and, always available?
-//            $criterion[] = new Criterion\LangueCode( $params['language'] );
+// ToDo: combine with and, always available?
+            $criterion[] = new Criterion\LangueCode( $params['language'] );
+//            $criterion[] = new Criterion\LanguageCode( $this->getDefaultLangCode() );
         }
         else
         {
-            // get the default language
-            $defaultLanguageCode = $this->getDefaultLangCode();
-            $criterion[] = new Criterion\LanguageCode( $defaultLanguageCode );
+             // get the default language
+//             $defaultLanguageCode = $this->getDefaultLangCode();
+//               $criterion[] = new Criterion\LanguageCode( $defaultLanguageCode );
+            //$criterion[] = new Criterion\LanguageCode( array( 'ger-DE', 'eng-GB' ) );
+
+            // only include languages which are defined in siteaccess config  system default|siteaccess languages
+            // if more than on a correct bitmask is build to include all object where one of the language is set
+            $criterion[] = new Criterion\LanguageCode( $this->getPrioritizedLanguages() );
         }
 
+        // disable extra query for count because totalCount is already included in searchResult
+        // and this call increase the number of stash calls with bigger size of included objects
         // search count
         // https://doc.ez.no/display/EZP/2.+Browsing,+finding,+viewing#id-2.Browsing,finding,viewing-Performingapuresearchcount
-        $searchCount = false;
-        if ( isset( $params['count'] ) && $params['count'] === true )
-        {
-            $queryCount = new LocationQuery( array() );
-            $queryCount->criterion = new Criterion\LogicalAnd( $criterion );
-            $queryCount->sortClauses = $sortClauses;
-            $searchCount = $this->searchService->findLocations( $queryCount )->totalCount;
-        }
+        //        $searchCount = false;
+        //        if ( isset( $params['count'] ) && $params['count'] === true )
+        //        {
+        //            $queryCount = new LocationQuery( array() );
+        //            $queryCount->criterion = new Criterion\LogicalAnd( $criterion );
+        //            $queryCount->sortClauses = $sortClauses;
+        //            $searchCount = $this->searchService->findLocations( $queryCount )->totalCount;
+        //        }
 
         $querySearch = new LocationQuery( array( 'offset' => $offset, 'limit' => $limit ) );
         $querySearch->criterion = new Criterion\LogicalAnd( $criterion );
         $querySearch->sortClauses = $sortClauses;
         $searchResult = $this->searchService->findLocations( $querySearch );
 
+        $searchCount = false;
+        // only if count parameter is set return count
+        // in newer ez version > 5.4 and in 5.3.5 the count is optional so you can
+        // save 1 sql query
+        if ( isset( $params['count'] ) && $params['count'] === true )
+        {
+            // use count from searchResult => the fastest way :-)
+            $searchCount = $searchResult->totalCount;
+        }
+
         foreach ( $searchResult->searchHits as $searchItem )
         {
+            $childLocationId = $searchItem->valueObject->id;
+
             if ( isset( $params['datamap'] ) && $params['datamap'] === true )
             {
                 $childContentId = $searchItem->valueObject->contentInfo->id;
@@ -319,8 +501,13 @@ class PublishToolsService
             }
             else
             {
-                $childLocationId = $searchItem->valueObject->contentInfo->mainLocationId;
-                $locationList[] = $this->locationService->loadLocation( $childLocationId );
+//                $childLocationId = $searchItem->valueObject->contentInfo->mainLocationId;
+//                $searchItem->valueObject is already the Value/Location
+//                so we do not fetch it again to reduce api calls !!
+//
+//                $childLocationId = $searchItem->valueObject->id;
+//                $locationList[] = $this->locationService->loadLocation( $childLocationId );
+                $locationList[] = $searchItem->valueObject;
             }
         }
 
@@ -383,10 +570,21 @@ class PublishToolsService
     }
 
     /**
-     * Generate a sort clause depending on String Parameter
+     * Generates a sort clause, depending on the given sort field and sort order parameters.
      *
-     * @param $sortField
-     * @param $sortOrder
+     * @param $sortField string Sort field, which should be used for sorting. Can be one of the
+     *                          following:
+     * <pre>
+     *  - 'LocationPath'
+     *  - 'LocationDepth'
+     *  - 'LocationPriority'
+     *  - 'ContentName'
+     *  - 'ContentId'
+     *  - 'DateModified'
+     *  - 'DatePublished'
+     * </pre>
+     * @param $sortOrder string Sort order, which should be used for sorting. Can be <b>'ASC'</b> or
+     *                          <b>'DESC'</b>.
      *
      * @return SortClause\ContentId|SortClause\ContentName|SortClause\DateModified|SortClause\DatePublished|SortClause\LocationDepth|SortClause\LocationPathString|SortClause\LocationPriority|SortClause\SectionIdentifier
      */
@@ -429,5 +627,47 @@ class PublishToolsService
         }
 
         return $result;
+    }
+
+    /**
+     * Fetches the string representation of a given content type ID (content type identifier).
+     *
+     * @param $contentTypeId integer of the content type
+     * @return bool|string False on error or a string representing the given content type ID.
+     */
+    public function getContentTypeIdentifier( $contentTypeId )
+    {
+        $cs = $this->contentTypeService;
+
+        try {
+            $ct = $cs->loadContentType($contentTypeId);
+            $contentTypeIdentifier = $ct->identifier;
+            return $contentTypeIdentifier;
+        } catch( \eZ\Publish\API\Repository\Exceptions\NotFoundException $error ) {
+            return false;
+        }
+    }
+
+    /**
+     * Returns an array of the priorized languages codes defined in YAML settings.
+     *
+     * <pre>
+        system:
+           default|siteaccess:
+              languages: [ger-DE,eng-GB]
+     * </pre>
+     * @return array An array containing the proriozed languages code from YAML as follows:
+     * <pre>
+        array(
+            'languageCode1',
+            'languageCode2'
+        )
+     * </pre>
+     */
+    public function getPrioritizedLanguages()
+    {
+        $languages = $this->configResolver->getParameter( 'languages' );
+
+        return $languages;
     }
 }
