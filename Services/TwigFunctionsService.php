@@ -2,7 +2,7 @@
 /**
  * File containing the TwigFunctionsService class
  *
- * @copyright Copyright (C) 2007-2014 CJW Network - Coolscreen.de, JAC Systeme GmbH, Webmanufaktur. All rights reserved.
+ * @copyright Copyright (C) 2007-2015 CJW Network - Coolscreen.de, JAC Systeme GmbH, Webmanufaktur. All rights reserved.
  * @license http://ez.no/licenses/gnu_gpl GNU GPL v2
  * @version //autogentag//
  * @filesource
@@ -18,12 +18,15 @@ class TwigFunctionsService extends \Twig_Extension
      */
     protected $PublishToolsService;
 
+    protected $TplVarsBufferArr;
+
     /**
      * @param \Cjw\PublishToolsBundle\Services
      */
     public function __construct( $PublishToolsService )
     {
         $this->PublishToolsService = $PublishToolsService;
+        $this->TplVarsBufferArr = array();
     }
 
     /**
@@ -42,7 +45,10 @@ class TwigFunctionsService extends \Twig_Extension
             new \Twig_SimpleFunction( 'cjw_user_get_current', array( $this, 'getCurrentUser' ) ),
             new \Twig_SimpleFunction( 'cjw_lang_get_default_code', array( $this, 'getDefaultLangCode' ) ),
             new \Twig_SimpleFunction( 'cjw_content_download_file', array( $this, 'streamFile' ) ),
-            new \Twig_SimpleFunction( 'cjw_redirect', array( $this, 'redirect' ) )
+            new \Twig_SimpleFunction( 'cjw_redirect', array( $this, 'redirect' ) ),
+            new \Twig_SimpleFunction( 'cjw_get_content_type_identifier', array( $this, 'getContentTypeIdentifier' ) ),
+            new \Twig_SimpleFunction( 'cjw_template_get_var', array( $this, 'getTplVar' ) ),
+            new \Twig_SimpleFunction( 'cjw_template_set_var', array( $this, 'setTplVar' ) )
         );
     }
 
@@ -188,7 +194,7 @@ class TwigFunctionsService extends \Twig_Extension
             }
 
             // if no insert position found (location is not part of menu tree), show top menu entries only
-            if ( $insertPosition > 0 || $depthCounter == 1)
+            if ( $insertPosition > 0 || $depthCounter == 1 )
             {
                 // http://stackoverflow.com/questions/3797239/insert-new-item-in-array-on-any-position-in-php
                 array_splice( $menuArr, $insertPosition, 0, $insertArrNew );
@@ -253,9 +259,9 @@ class TwigFunctionsService extends \Twig_Extension
     }
 
     /**
-     * make an redirect to $url
+     * Send location header to redirect the client to the given URL.
      *
-     * @param string $url
+     * @param string $url URL where the client should be redirected to.
      */
     public function redirect( $url = false )
     {
@@ -267,7 +273,7 @@ class TwigFunctionsService extends \Twig_Extension
     }
 
     /**
-     * streams an file
+     * Streams the given file directly to the client.
      *
      * @param mixed $file
      */
@@ -285,5 +291,61 @@ class TwigFunctionsService extends \Twig_Extension
             readfile( '.'.$file->uri );
             exit;
         }
+    }
+
+    /**
+     * Gets contentType id by Content type name
+     * {{ cjw_get_content_type_identifier( content.contentInfo.contentTypeId )  }}
+     *
+     * e.g
+     * {% if cjw_get_content_type_identifier( content.contentInfo.contentTypeId ) == 'cjw_gallery' ) %}
+     *
+     * @param  $contentTypeId
+     * @return bool
+     */
+    public function getContentTypeIdentifier( $contentTypeId )
+    {
+        return $this->PublishToolsService->getContentTypeIdentifier( $contentTypeId );
+    }
+
+    /**
+     * Returns a global template variable, which has been saved via the
+     * {@see TwigFunctionsService::setTplVar} function.
+     *
+     * @param bool|string $var Name of the variable, which should be fetched from the buffer,
+     *                         defaults to false if not given.
+     * @return bool False if no variable with the given variable name could be found in the buffer,
+     *              or the requested variable's value.
+     */
+    public function getTplVar( $var = false )
+    {
+        $result = false;
+
+        if ( $var !== false && isset( $this->TplVarsBufferArr[$var] ) !== false )
+        {
+            $result = $this->TplVarsBufferArr[$var];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Sets a global template variable, which can be fetched via the
+     * {@see TwigFunctionsService::setTplVar} function.
+     *
+     * @param bool|string $var Name of the variable, which should be set in the buffer, defaults to
+     *                         false if not given.
+     * @param mixed $value Value of the variable, which should be set in the buffer, defaults to
+     *                         false if not given.
+     * @return bool
+     */
+    public function setTplVar( $var = false, $value = false )
+    {
+        if ( $var === false || $value === false )
+        {
+            return false;
+        }
+
+        $this->TplVarsBufferArr[$var] = $value;
     }
 }
