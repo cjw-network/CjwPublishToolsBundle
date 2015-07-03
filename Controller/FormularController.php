@@ -25,6 +25,7 @@ class FormularController extends Controller
     protected $formBuilderService;
     protected $formHandlerService;
     protected $identifier;
+    protected $userService;
 
     public function __construct()
     {
@@ -36,14 +37,15 @@ class FormularController extends Controller
      */
     private function getServices()
     {
-        $this->repository         = $this->getRepository();
-        $this->request            = $this->getRequest();
-        $this->contentService     = $this->repository->getContentService();
-        $this->locationService    = $this->repository->getLocationService();
-        $this->contentTypeService = $this->repository->getContentTypeService();
-        $this->formBuilderService = $this->get( 'cjw.publishtools.formbuilder.functions' );
-        $this->formHandlerService = $this->get( 'cjw.publishtools.formhandler.functions' );
+        $this->repository          = $this->getRepository();
+        $this->request             = $this->getRequest();
+        $this->contentService      = $this->repository->getContentService();
+        $this->locationService     = $this->repository->getLocationService();
+        $this->contentTypeService  = $this->repository->getContentTypeService();
+        $this->formBuilderService  = $this->get( 'cjw_publishtools.formbuilder.functions' );
+        $this->formHandlerService  = $this->get( 'cjw_publishtools.formhandler.functions' );
         $this->initialLanguageCode = $this->repository->getContentLanguageService()->getDefaultLanguageCode();
+        $this->userService         = $this->repository->getUserService();
     }
 
     /**
@@ -267,11 +269,22 @@ class FormularController extends Controller
 
         $formSchema = $this->formBuilderService->getFormSchemaFromContentObjectFields( $contentType, $this->initialLanguageCode, $content = false, $locationId );
 
-        $form = $this->formBuilderService->formBuilder( $formSchema['0'], $formSchema['1'], $this->initialLanguageCode );
+        $form = $this->formBuilderService->formBuilder( $formSchema['0'], $formSchema['1'], $this->initialLanguageCode, $formParams );
 
         if ( $this->request->isMethod( 'POST' ) )
         {
             $form->handleRequest( $this->request );
+
+            $requestForm = $this->request->request->get('form');
+            // redirect if the cancel button has been pressed
+            if ( isset( $requestForm['cancel'] ) )
+            {
+                // Redirect to root on cancel
+                // ToDo: Get redirect url from yml or template
+                $redirectUrl = '/';
+
+                return new RedirectResponse( $redirectUrl );
+            }
 
             if ( $form->isValid() )
             {
@@ -283,9 +296,18 @@ class FormularController extends Controller
                 {
                     // ToDo: sucess tpl or login, email exception
 
-                    $mainLocationId = $newUser->versionInfo->contentInfo->mainLocationId;
-                    $redirectUrl = '/content/location/'.$mainLocationId;
-                    return new RedirectResponse( $redirectUrl );
+                    if ( $form->isValid() )
+                    {
+                        // process configured handlers
+                        $response = $this->processHandlers( 'user_register_config:handlers', $form->getData(), array() );
+
+                        if ( $response !== false )
+                        {
+                            // ToDo: dealing with cache ttl ?
+                            return $response;
+                        }
+                    }
+
                 }
             }
         }
@@ -359,9 +381,17 @@ class FormularController extends Controller
 
         foreach( $handlerConfigArr as $handlerConfig )
         {
-            $handlerClass = $handlerConfig['handler_class'];    // ToDo: test if exists
+            // If the handler_class is not set, we're continue with the next cycle of the loop
+            if( isset( $handlerConfig['handler_class'] ) ) {
+                $handlerClass = $handlerConfig[ 'handler_class' ];
 
-            $response = $this->formHandlerService->$handlerClass( $formDataObj, $handlerConfig, $handlerParameters );
+                // Check whether the given $handler_class method exists in the "formHandlerService"
+                // object member.
+                if( method_exists( $this->formHandlerService, $handlerClass ) )
+                {
+                    $response = $this->formHandlerService->$handlerClass( $formDataObj, $handlerConfig, $handlerParameters );
+                }
+            }
         }
 
         if ( $response !== false )
@@ -389,6 +419,20 @@ class FormularController extends Controller
         $contentDraft = $this->contentService->createContentDraft( $contentInfo );
 
         $contentStruct = $this->formBuilderService->buildContentStructWithFormData( $formDataObj, $contentUpdateStruct );
+
+        // If user is given, we're going to create a userStruct to update the user object, too
+        if ( $contentStruct['ezuser'] !== false ) {
+            $user = $this->userService->loadUserByLogin( $contentStruct['ezuser']['login'] );
+
+            $userStruct = $this->userService->newUserUpdateStruct();
+            $userStruct->contentUpdateStruct = $contentUpdateStruct;
+
+            $userStruct->email    = $contentStruct['ezuser']['email'];
+            $userStruct->password = $contentStruct['ezuser']['password'];
+
+            $user = $this->userService->updateUser( $user, $userStruct );
+        }
+
         $contentStruct = $contentStruct['contentStruct'];
 
         // update and publishing
@@ -454,7 +498,7 @@ class FormularController extends Controller
 
         if ( $object['ezuser'] !== false )
         {
-            $userGroup = $userService->loadUserGroup( $locationId ); 
+            $userGroup = $userService->loadUserGroup( $locationId );
 
             $userCreateStruct = $userService->newUserCreateStruct(
                 $object['ezuser']['login'],

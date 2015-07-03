@@ -38,7 +38,7 @@ class FormHandlerService
      * @param mixed $formDataObj
      * @param array $handlerConfigArr
      * @param mixed $handlerParameters
-     * 
+     *
      * @return bool false
      */
     public function addToInfoCollectorHandler( $formDataObj, $handlerConfigArr, $handlerParameters )
@@ -46,7 +46,7 @@ class FormHandlerService
         $content = $handlerParameters['content'];
         $contentType = $handlerParameters['contentType'];
 
-        $formBuilderService = $this->container->get( 'cjw.publishtools.formbuilder.functions' );
+        $formBuilderService = $this->container->get( 'cjw_publishtools.formbuilder.functions' );
 
         $timestamp = time();
 
@@ -113,7 +113,7 @@ class FormHandlerService
      * @param mixed $formDataObj
      * @param array $handlerConfigArr
      * @param mixed $handlerParameters
-     * 
+     *
      * @return bool false
      */
     public function sendEmailHandler( $formDataObj, $handlerConfigArr, $handlerParameters )
@@ -157,21 +157,46 @@ class FormHandlerService
                 $email_sender_mapping = substr( $handlerConfigArr['email_sender'], 1 );
                 if ( isset( $formDataArr[$email_sender_mapping] ) )
                 {
-// ToDo: validate more, contains '@', '.', etc.
-                    $from = $formDataArr[$email_sender_mapping];
+                    // Check email addresses validity by using PHP's internal filter_var function
+                    if( filter_var( $formDataArr[$email_sender_mapping], FILTER_VALIDATE_EMAIL ) )
+                    {
+                        $from = $formDataArr[$email_sender_mapping];
+                    }
                 }
             }
             else
             {
-// ToDo: validate more, contains '@', '.', etc.
-                $from = $handlerConfigArr['email_sender'];
+                // Check email addresses validity by using PHP's internal filter_var function
+                if( filter_var( $handlerConfigArr['email_sender'], FILTER_VALIDATE_EMAIL ) )
+                {
+                    $from = $handlerConfigArr['email_sender'];
+                }
             }
         }
 
         $to = false;
-        if ( isset( $handlerConfigArr['email_receiver'] ) )       // ToDo: more checks
+        if ( isset( $handlerConfigArr['email_receiver'] ) )
         {
-            $to = $handlerConfigArr['email_receiver'];
+            if( substr( $handlerConfigArr['email_receiver'], 0, 1 ) === '@' )
+            {
+                $email_receiver_mapping = substr( $handlerConfigArr['email_receiver'], 1 );
+                if( isset( $formDataArr[$email_receiver_mapping] ) )
+                {
+                    // Check email addresses validity by using PHP's internal filter_var function
+                    if ( filter_var( $formDataArr[$email_receiver_mapping], FILTER_VALIDATE_EMAIL ) )
+                    {
+                        $to = $formDataArr[$email_receiver_mapping];
+                    }
+                }
+            }
+            else
+            {
+                // Check email addresses validity by using PHP's internal filter_var function
+                if ( filter_var( $handlerConfigArr['email_receiver'], FILTER_VALIDATE_EMAIL ) )
+                {
+                    $to = $handlerConfigArr['email_receiver'];
+                }
+            }
         }
 
         $logging = false;
@@ -232,7 +257,7 @@ class FormHandlerService
      * @param mixed $formDataObj
      * @param array $handlerConfigArr
      * @param mixed $handlerParameters
-     * 
+     *
      * @return result
      */
     public function successHandler( $formDataObj, $handlerConfigArr, $handlerParameters )

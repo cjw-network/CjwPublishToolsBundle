@@ -1,0 +1,19 @@
+{% extends site_bundle_name ~ '::pagelayout.html.twig' %}
+
+{% block content %}
+    <div class="class-form content-view-edit">
+        {{ include( site_bundle_name ~ ':parts:breadcrumb.html.twig' ) }}
+
+        <div id="content-right">
+            {{ include( site_bundle_name ~ ':parts:menu_user.html.twig' ) }}
+        </div>
+
+        <div id="content-main">
+            <h1 class="content-header">Edit</h1>
+
+            {# http://brentertainment.com/other/docs/cookbook/form/twig_form_customization.html #}
+            {{ form(form) }}
+        </div>
+    </div>
+
+{% endblock %}

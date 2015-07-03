@@ -17,14 +17,35 @@ class FormBuilderService
 {
     protected $container;
     protected $config;
+    protected $configFile;
 
     /**
      * init the needed services, load the config from formbuilder.yml
      */
-    public function __construct( $container )
+    public function __construct( $container, $configFile )
     {
         $this->container = $container;
-        $this->config = Yaml::parse( __DIR__ . '/../../../' . $this->getCurrentSiteBundle()->prefix . '/' . $this->getCurrentSiteBundle()->name . '/Resources/config/formbuilder.yml' );
+        $this->setConfigFile( $configFile );
+    }
+
+    /**
+     * (Re)sets the configuration file.
+     *
+     * @param $configFile string Path to the configuration YAML, located from eZROOT
+     */
+    public function setConfigFile( $configFile )
+    {
+        // Note that the realpath function will strip the ending "/" from the filename string
+        $ezRootDir = realpath(__DIR__ . '/../../../../' );
+
+        if( $configFile )
+        {
+            // Filename will look like so:
+            //  root/to/ez/src/Cjw/SiteCjwPublishBundle/Resources/config/formbuilder.yml
+            $this->configFile = "{$ezRootDir}/{$configFile}";
+        }
+
+        $this->config = Yaml::parse( $this->configFile );
     }
 
     /**
@@ -59,22 +80,59 @@ class FormBuilderService
 //                $formAttrArr['expanded'] = true;
             }
 
+            // Render password fields doubled by using the 'repeated' form field type
+            $type = $field['type'];
+            // If the type of the field is 'password', we're going to overwrite this type with
+            // 'repeated', which will prompt the user to enter the password two times (repeat)
+            if( $field['type'] === 'password' )
+            {
+                $type = 'repeated';
+
+                // To render 'password' input elements, instead of 'text' input elements, we need
+                // to set the 'type' attribute to password, so the formBuilder builds password typed
+                // input elements.
+                $formAttrArr['type'] = 'password';
+
+                $invalidMessage = $this->container->get( 'translator' )->trans( 'cjw_publishtools.formbuilder.passwords_must_match' );
+                $formAttrArr['invalid_message'] = $invalidMessage;
+            }
+
             // http://symfony.com/doc/current/reference/forms/types/form.html
-            $formBuilder->add( $key, $field['type'], $formAttrArr );
+            $formBuilder->add( $key, $type, $formAttrArr );
         }
 
-        $labelSaveButton = 'Save';
-        $labelCancelButton = 'Cancel';
+//        $labelSaveButton = 'Save';
+//        $labelCancelButton = 'Cancel';
+
+        $labelSaveButton = 'cjw_publishtools.formbuilder.default.button.save';
+        $labelCancelButton = 'cjw_publishtools.formbuilder.default.button.cancel';
 
         if ( $parameters )
         {
-            if ( isset( $parameters['button_config']['save_button']['label'][$languageCode] ) )
+            if( isset( $parameters['button_config']['save_button']['label'] ) )
             {
-                $labelSaveButton = $parameters['button_config']['save_button']['label'][$languageCode];
+                // Check whether the label is set via language_code or directly
+                if( !isset( $parameters['button_config']['save_button']['label'][$languageCode] ) )
+                {
+                    $labelSaveButton = $parameters['button_config']['save_button']['label'];
+                }
+                else
+                {
+                    $labelSaveButton = $parameters['button_config']['save_button']['label'][$languageCode];
+                }
             }
-            if ( isset( $parameters['button_config']['cancel_button']['label'][$languageCode] ) )
+
+            if( isset( $parameters['button_config']['cancel_button']['label'] ) )
             {
-                $labelCancelButton = $parameters['button_config']['cancel_button']['label'][$languageCode];
+                // Check whether the label is set via language_code or directly
+                if( !isset( $parameters['button_config']['cancel_button']['label'][$languageCode] ) )
+                {
+                    $labelCancelButton = $parameters['button_config']['cancel_button']['label'];
+                }
+                else
+                {
+                    $labelCancelButton = $parameters['button_config']['cancel_button']['label'][$languageCode];
+                }
             }
         }
 
@@ -131,7 +189,7 @@ class FormBuilderService
 
     /**
      * reimp this function!
-     * 
+     *
      * Get and builds a form schema / entity from an content object with fields
      *
      * @param string $contentType
@@ -170,6 +228,7 @@ class FormBuilderService
                     // map ez types to symfony types
                     // http://symfony.com/doc/current/reference/forms/types.html
                     // ToDo: to many
+
                     switch ( $field->fieldTypeIdentifier )
                     {
                         case 'ezstring':
@@ -198,16 +257,22 @@ class FormBuilderService
                             $fieldArr['value'] = $field->defaultValue->email;
                             break;
 
+                        case 'ezboolean':
+                            $formFieldIdentifier = 'ezxmltext:'.$field->identifier;
+                            $fieldArr['type'] = 'checkbox';
+                            $fieldArr['value'] = $field->defaultValue->bool;
+                            break;
+
                         case 'ezuser' :
 // ToDo: many
                             $formFieldIdentifier = 'ezuser:'.$field->identifier.':login';
                             $fieldArr['type'] = 'text';
-                            $fieldArr['label'] = 'User Login';
+                            $fieldArr['label'] = 'cjw_publishtools.formbuilder.user.login';
                             $fieldArr['value'] = '';
 
                             $fieldArr1 = array();
                             $fieldArr1['type'] = 'email';
-                            $fieldArr1['label'] = 'User E-Mail';
+                            $fieldArr1['label'] = 'cjw_publishtools.formbuilder.user.email';
                             $fieldArr1['required'] = true;
                             $formFieldIdentifier1 = 'ezuser:'.$field->identifier.':email';
                             $fieldArr1['value'] = '';
@@ -215,7 +280,7 @@ class FormBuilderService
 
                             $fieldArr2 = array();
                             $fieldArr2['type'] = 'password';
-                            $fieldArr2['label'] = 'User Password';
+                            $fieldArr2['label'] = 'cjw_publishtools.formbuilder.user.password';
                             $fieldArr2['required'] = true;
                             $formFieldIdentifier2 = 'ezuser:'.$field->identifier.':password';
                             $fieldArr2['value'] = '';
@@ -226,7 +291,14 @@ class FormBuilderService
                         case 'ezselection':
                             $formFieldIdentifier = 'ezselection:'.$field->identifier;
                             $fieldArr['type'] = 'choice';
-                            $fieldArr['choices'] = $field->fieldSettings['options'];
+                            $fieldArr['choices'] = array();
+
+                            // Translate choices, which aren't translatable in eZ BackEnd
+                            foreach( $field->fieldSettings['options'] as $fieldChoiceKey => $fieldChoice )
+                            {
+                                $fieldArr['choices'][$fieldChoiceKey] = $this->container->get( 'translator' )->trans( $fieldChoice );
+                            }
+
                             // http://stackoverflow.com/questions/17314996/symfony2-array-to-string-conversion-error
                             if ( $field->fieldSettings['isMultiple'] )
                             {
@@ -237,7 +309,7 @@ class FormBuilderService
                             {
                                 $fieldArr['multiple'] = false;
                                 $fieldArr['value'] = false;
-                                if ( isset( $field->defaultValue->selection['0'] ) ) 
+                                if ( isset( $field->defaultValue->selection['0'] ) )
                                 {
                                     $fieldArr['value'] = $field->defaultValue->selection['0'];
                                 }
@@ -257,8 +329,11 @@ class FormBuilderService
                         switch ( $formFieldIdentifierArr['0'] )
                         {
                             case 'ezuser':
-                                    $fieldArr['value'] = $content->fields[$field->identifier][$languageCode]->login;
-                                    $fieldArr1['value'] = $content->fields[$field->identifier][$languageCode]->email;
+                                $userValue = $content->getFieldValue( $field->identifier );
+
+                                $fieldArr['value']  = $userValue->login;
+                                $fieldArr1['value'] = $userValue->email;
+
                                 break;
 
                             default:
@@ -268,18 +343,18 @@ class FormBuilderService
                                         // http://stackoverflow.com/questions/17314996/symfony2-array-to-string-conversion-error
                                         if ( $fieldArr['multiple'] )
                                         {
-                                            $fieldArr['value'] = $content->fields[$field->identifier][$languageCode]->selection;
+                                            $fieldArr['value'] = $content->getFieldValue( $field->identifier )->selection;
                                         }
                                         else
                                         {
-                                            $fieldArr['value'] = $content->fields[$field->identifier][$languageCode]->selection['0'];
+                                            $fieldArr['value'] = $content->getFieldValue( $field->identifier )->selection['0'];
                                         }
                                         break;
 
                                     default:
-                                        if ( isset( $content->fields[$field->identifier][$languageCode]->text ) )
+                                        if(isset($content->getFieldValue( $field->identifier )->text))
                                         {
-                                            $fieldArr['value'] = $content->fields[$field->identifier][$languageCode]->text;
+                                            $fieldArr['value'] = $content->getFieldValue( $field->identifier )->text;
                                         }
                                 }
                         }

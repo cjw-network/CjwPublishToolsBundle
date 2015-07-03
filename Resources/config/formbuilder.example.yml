@@ -1,0 +1,116 @@
+global_config:
+    parameters:
+    parameters:
+        button_config:
+            save_button:
+                label:
+                    ger-DE: 'Speichern'
+            cancel_button:
+                redirect:                                       # ToDo
+                label:
+                    ger-DE: 'Abbrechen'
+    handler:
+        infocollector:
+            handler_class: addToInfoCollectorHandler
+        success:
+            handler_class: successHandler
+            template: success.html.twig
+        sendmail:
+            handler_class: sendEmailHandler
+            logging: true
+            debug: true                                         # skip sending mails out
+            template: ':email:feedback_form.html.twig'
+            email_sender: 'test@test.ccom'                      # static or mapping (@field)
+            email_receiver: 'test@test.ccom'
+            email_subject: ''                                   # static or mapping (@field), ToDo: intl
+#            email_bcc: ToDo
+
+formbuilder_config:                                             # static form config
+    parameters:                                                 # optional, overrides for global config parameters
+        button_config:
+            save_button:
+                label:
+                    ger-DE: 'Absenden'
+            cancel_button: false
+    handler:                                                    # optional, overrides for global config parameters
+    types:
+        feedback_form:                                          # identifier (/form/{identifier})
+            parameters:                                         # ooptional, verrides the previous two
+            handler:
+                sendmail:
+                    template: ':email:feedback_form.html.twig'
+                    email_subject: '@subject'                   # static or mapping (@field), ToDo: intl
+                    email_sender: '@email'                      # static or mapping (@field)
+                    email_receiver: 'test@test.ccom'
+                success: :success:feedback_form.html.twig
+            fields:                                             # http://symfony.com/doc/current/book/forms.html#built-in-field-types
+                email:
+                     field_type: 'email'
+                     field_label:
+                        ger-DE: 'Ihre E-Mail Adresse'
+#                     field_placeholder: 'E-Mail'
+#                     field_value: 'default'
+                     is_required: true
+                subject:
+                    field_type: 'text'
+                    field_label:
+                        ger-DE: 'Betreff'
+                    is_required: true
+                message:
+                    field_type: 'textarea'
+                    field_label:
+                        ger-DE: 'Nachricht'
+                    is_required: true
+                send_copy:
+                    field_type: 'checkbox'
+                    field_label:
+                        ger-DE: 'Eine Kopie dieser Nachricht an meine E-Mail Adresse schicken'
+                    field_value: false
+                    is_required: false
+
+formcollector_config:
+    parameters:
+        button_config:
+            save_button:
+                label:
+                    ger-DE: 'Absenden'
+            cancel_button: false
+    handler:
+    types:
+        cjw_feedback_form:
+            parameters:
+            handler:
+                infocollector:
+                sendmail:
+                    email_sender: @email
+                    email_subject: @subject
+                success:
+                    template: :success:cjw_feedback_form.html.twig
+
+frontendediting_config:
+    parameters:
+    handler:
+    types:
+        user:
+            parameters:
+            handler:
+            fields:
+                - user_account
+                - first_name
+                - last_name
+                - titel
+                - anrede
+                - plz
+                - ort
+                - strasse_hausnr
+                - telefon
+
+user_register_config:
+    parameters:
+        admin_user_id: 14
+        user_contenttype_id: 21
+        user_group_id: 60
+    handler:
+        success:
+            handler_class: successHandler
+            template: :success:register.html.twig
