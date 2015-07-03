@@ -9,7 +9,7 @@ Webmanufaktur - [www.webmanufaktur.ch](http://www.webmanufaktur.ch)
 
 License: GPL v2
 
-------------------------------------
+***
 
 The CjwPublishToolsBundle is an extension for eZ Publish 5 and Symfony.
 
@@ -19,7 +19,8 @@ This Bundle is **Work in progress**.
 
 **full Documentation can be found at: [www.cjw-network.com](http://www.cjw-network.com)**
 
-------------------------------------
+***
+
 **Why CJW Publish Tools Bundle?**
 
 There are two types of technical eZ Publish user:
@@ -41,8 +42,8 @@ You need for every website a search and human friendly HTML title, a breadcrumb 
 
 Discussion to this topic: [http://share.ez.no/forums/ez-publish-5-platform/ez-publish-5-and-web-integrators](http://share.ez.no/forums/ez-publish-5-platform/ez-publish-5-and-web-integrators)
 
+***
 
-------------------------------------
 **Installation**:
 
 - Download bundle
@@ -52,7 +53,7 @@ Discussion to this topic: [http://share.ez.no/forums/ez-publish-5-platform/ez-pu
 
 ToDo: composer install
 
-------------------------------------
+***
 
 The Bundle contains two services and some example templates.
 
@@ -61,16 +62,25 @@ The two services are a **TwigFunctionService** that provides some Twig Template 
 - cjw_breadcrumb
 - cjw_treemenu
 - cjw_content_fetch
-- cjw_lang_get_default_code
 - cjw_content_download_file
+- cjw_load_content_by_id			(maybe renaming this to cjw_content_load_by_id in the future)
+- cjw_get_content_type_identifier	(maybe renaming this to cjw_content_get_type_identifier in the future)
+- cjw_lang_get_default_code
+- cjw_user_get_current
 - cjw_redirect
+- cjw_template_get_var
+- cjw_template_set_var
+- cjw_render_location
+- cjw_siteaccess_parameters
+- cjw_config_resolver_get_parameter
+- cjw_config_get_parameter
 - more tbd
 
 and the **PublishToolsService**. The service contains some helper functions and a "content fetch" function trying to emulate some features of the god old content fetch functions in eZ Publish 4.
 
 You can easily fetch content in twig templates and build Websites without hacking controller with PHP.
 
-------------------------------------
+***
 
 A short twig template example:
 
@@ -114,7 +124,7 @@ A short twig template example:
 {% endblock %}
 ```
 
-------------------------------------
+***
 
 **cjw_content_fetch Parameters**:
 
@@ -129,8 +139,13 @@ A short twig template example:
 | language | array | not set | no | if empty not set than current language |
 | count | boolean | false | no | if true include result count for pagination |
 | parent | boolean | false | no | if true include parent node in result |
+| filter_relation | array | not set | no | [ [ 'field', 'contains', objectId ] ] |
+| filter_field | array | not set | no | [ [ 'date_to', '>', date().timestamp ] ] |
+| filter_search | array | not set | no | ToDo: not implemented yet |
+| filter_attribute | array | not set | no | ToDo: not implemented yet |
+| mainnode | boolean | false | no | ToDo: not implemented yet |
 
-------------------------------------
+***
 
 Result array structure:
 
@@ -151,3 +166,25 @@ Result array structure:
 		|			.
 		|			.
 		|-- ...
+
+***
+
+**cjw_render_location** a fast render controller ez_content:viewLocation replacement
+
+before:
+{{ render( controller(  'ez_content:viewLocation', { 'location': location 'viewType': 'line' } )  )  }}
+
+after:
+{{ cjw_render_location( {'location': location, 'viewType': 'line'} ) }}
+
+***
+
+**formbuilder**
+- formulars can be defined in a yaml file or as an content class with infocollector fields
+- stackable handler: send email, add to infocollector (needs orm), sucess
+- formulars defined via content classes can use the ezpublish build in template override mechanism
+- easy to use frontend editing (add and edit content)
+- easy to use user register
+- programming php classes is not needed
+
+
