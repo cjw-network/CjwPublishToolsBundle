@@ -48,7 +48,8 @@ class TwigFunctionsService extends \Twig_Extension
             new \Twig_SimpleFunction( 'cjw_redirect', array( $this, 'redirect' ) ),
             new \Twig_SimpleFunction( 'cjw_get_content_type_identifier', array( $this, 'getContentTypeIdentifier' ) ),
             new \Twig_SimpleFunction( 'cjw_template_get_var', array( $this, 'getTplVar' ) ),
-            new \Twig_SimpleFunction( 'cjw_template_set_var', array( $this, 'setTplVar' ) )
+            new \Twig_SimpleFunction( 'cjw_template_set_var', array( $this, 'setTplVar' ) ),
+            new \Twig_SimpleFunction( 'cjw_file_exists', array( $this, 'fileExists' ) )
         );
     }
 
@@ -347,5 +348,21 @@ class TwigFunctionsService extends \Twig_Extension
         }
 
         $this->TplVarsBufferArr[$var] = $value;
+    }
+
+    /**
+     * Checks if a file exists
+     */
+    public function fileExists( $file = '' )
+    {
+
+        $result = false;
+
+        if ( file_exists( $file ) )
+        {
+            $result = true;
+        }
+
+        return $result;
     }
 }
