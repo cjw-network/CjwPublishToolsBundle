@@ -14,6 +14,7 @@ use Symfony\Component\Templating\EngineInterface;
 
 class FormHandlerService
 {
+    const separator = '___';
     protected $container;
     protected $em;
     protected $mailer;
@@ -41,7 +42,7 @@ class FormHandlerService
      *
      * @return bool false
      */
-    public function addToInfoCollectorHandler( $formDataObj, $handlerConfigArr, $handlerParameters )
+    public function addToInfoCollectorHandler( $formDataObj, $handlerConfigArr, $handlerParameters, $form )
     {
         $content = $handlerParameters['content'];
         $contentType = $handlerParameters['contentType'];
@@ -73,7 +74,7 @@ class FormHandlerService
         // add collection attribute
         foreach( $formDataObj as $key => $attribute )
         {
-            $keyArr = explode( ':', $key );
+            $keyArr = explode( FormHandlerService::separator, $key );
             $fieldType = $keyArr['0'];
             $fieldIdentifier = $keyArr['1'];
 
@@ -116,14 +117,21 @@ class FormHandlerService
      *
      * @return bool false
      */
-    public function sendEmailHandler( $formDataObj, $handlerConfigArr, $handlerParameters )
+    public function sendEmailHandler( $formDataObj, $handlerConfigArr, $handlerParameters, $form )
     {
-        $formDataArr = array();
-        foreach ( $formDataObj as $key => $item )
+        $content = false;
+        if ( isset( $handlerParameters['content'] ) )
         {
-            $keyArr = explode( ':', $key );
-            $formDataArr[$keyArr['1']] = $item;
+            $content = $handlerParameters['content'];
         }
+
+        $location = false;
+        if ( isset( $handlerParameters['location'] ) )
+        {
+            $location = $handlerParameters['location'];
+        }
+
+        $formDataArr = $this->getFormDataArray( $formDataObj );
 
         $template = false;
         if ( isset( $handlerConfigArr['template'] ) )       // ToDo: more checks
@@ -137,9 +145,9 @@ class FormHandlerService
             if ( substr( $handlerConfigArr['email_subject'], 0, 1 ) === '@' )
             {
                 $subject_mapping = substr( $handlerConfigArr['email_subject'], 1 );
-                if ( isset( $formDataArr[$subject_mapping] ) )
+                if ( isset( $formDataArr[$subject_mapping]['value'] ) )
                 {
-                    $subject = $formDataArr[$subject_mapping];
+                    $subject = $formDataArr[$subject_mapping]['value'];
                 }
             }
             else
@@ -155,12 +163,12 @@ class FormHandlerService
             if ( substr( $handlerConfigArr['email_sender'], 0, 1 ) === '@' )
             {
                 $email_sender_mapping = substr( $handlerConfigArr['email_sender'], 1 );
-                if ( isset( $formDataArr[$email_sender_mapping] ) )
+                if ( isset( $formDataArr[$email_sender_mapping]['value'] ) )
                 {
                     // Check email addresses validity by using PHP's internal filter_var function
-                    if( filter_var( $formDataArr[$email_sender_mapping], FILTER_VALIDATE_EMAIL ) )
+                    if( filter_var( $formDataArr[$email_sender_mapping]['value'], FILTER_VALIDATE_EMAIL ) )
                     {
-                        $from = $formDataArr[$email_sender_mapping];
+                        $from = $formDataArr[$email_sender_mapping]['value'];
                     }
                 }
             }
@@ -180,12 +188,12 @@ class FormHandlerService
             if( substr( $handlerConfigArr['email_receiver'], 0, 1 ) === '@' )
             {
                 $email_receiver_mapping = substr( $handlerConfigArr['email_receiver'], 1 );
-                if( isset( $formDataArr[$email_receiver_mapping] ) )
+                if( isset( $formDataArr[$email_receiver_mapping]['value'] ) )
                 {
                     // Check email addresses validity by using PHP's internal filter_var function
-                    if ( filter_var( $formDataArr[$email_receiver_mapping], FILTER_VALIDATE_EMAIL ) )
+                    if ( filter_var( $formDataArr[$email_receiver_mapping]['value'], FILTER_VALIDATE_EMAIL ) )
                     {
-                        $to = $formDataArr[$email_receiver_mapping];
+                        $to = $formDataArr[$email_receiver_mapping]['value'];
                     }
                 }
             }
@@ -211,27 +219,58 @@ class FormHandlerService
             $debug = true;
         }
 
+        $bcc = array();
+        if( isset($handlerConfigArr['email_bcc']))
+        {
+            $bcc = $handlerConfigArr['email_bcc'];
+        }
+
         if ( $template !== false && $subject !== false && $from !== false && $to !== false )
         {
 // ToDo: render template inline if $template false
+
+            $templateContent = $this->container->get('twig')->loadTemplate($template);
+
+            $templateParameters =
+                array( 'form' => $form->createView(),
+                       'form_data_array' => $formDataArr,
+                       'form_data_object' => $formDataObj,
+                       'content' => $content,
+                       'location' => $location );
+
+            $bodyTextHtml = $templateContent->renderBlock('body_text_html',
+                    $templateParameters
+            );
+
+            $bodyTextPlain = $templateContent->renderBlock('body_text_plain',
+                $templateParameters
+            );
+
             $message = \Swift_Message::newInstance()
+//                ->setEncoder(\Swift_Encoding::get7BitEncoding())
+//                ->setCharset('UTF-8')
+                ->setEncoder(\Swift_Encoding::get8BitEncoding())
                 ->setSubject( $subject )
                 ->setFrom( $from )
                 ->setTo( $to )
-                ->setBody( $this->templating->render( $template, array( 'body' => $formDataArr ) ), 'text/html' );
-
-//            $message->addPart('ToDo', 'text/plain');
+                ->setBcc( $bcc )
+                ->setBody( $bodyTextHtml, 'text/html')
+                ->addPart(  $bodyTextPlain, 'text/plain'  );
 
             if ( $debug === false )
             {
-                $this->mailer->send( $message );
-                // ToDo: catch errors
+               $this->mailer->send( $message );
             }
 
             if ( $logging === true )
             {
                 $msgId = substr( $message->getHeaders()->get( 'Message-ID' )->getFieldBody(), 1, -1 );
-                $dump = $message->getHeaders()->toString() . $message->getBody();
+
+                //$dump = $message->toString(); <- this is the "real" output sent by the mailer
+                $dump = $msgId."\n\n".$bodyTextPlain.$bodyTextHtml; // <- this is the "clean" uncoded output fetched directly from the template
+
+//                $dump = str_replace( 'search', '', $message->toString() );
+
                 $log_dir = $this->container->getParameter( 'kernel.logs_dir' ) . '/formbuilder/';
 
                 if ( is_dir( $log_dir ) === false )
@@ -244,8 +283,21 @@ class FormHandlerService
         }
         else
         {
-            // ToDo: error log
-            echo 'error';exit;
+            if( $debug == true )
+            {
+                $error =
+                    'Error: All parameters ($template, $subject, $from, $to) must be provided <br> <br>
+                     This error was thrown on line: <font color="#5f9ea0">'.__LINE__.'</font><br>'.
+                    'Of file: <font color="#5f9ea0">'.__FILE__. '</font><br>'.
+                    'Inside of function: <font color="#5f9ea0">'.__FUNCTION__.'</font> <br>'.
+                    '<br> <font color="red">Warning: </font> if this error is shown in production, disable debug!';
+
+                die( $error );
+            }
+            else
+            {
+                die( "search for: error code #244" );
+            }
         }
 
         return false;
@@ -260,7 +312,7 @@ class FormHandlerService
      *
      * @return result
      */
-    public function successHandler( $formDataObj, $handlerConfigArr, $handlerParameters )
+    public function successHandler( $formDataObj, $handlerConfigArr, $handlerParameters, $form )
     {
         $content = false;
         if ( isset( $handlerParameters['content'] ) )
@@ -276,11 +328,18 @@ class FormHandlerService
 
         $template = $this->formBuilderService->getTemplateOverride( $handlerConfigArr['template'] );
 
+
+        $formDataArr = $this->getFormDataArray( $formDataObj );
+
         // ToDo: template checks, if false render inline
 
         return $this->templating->render(
             $template,
-            array( 'form' => $formDataObj, 'content' => $content, 'location' => $location )
+            array( 'form' => $form->createView(),
+                   'form_data_array' => $formDataArr,
+                   'form_data_object' => $formDataObj,
+                   'content' => $content,
+                   'location' => $location )
         );
     }
 

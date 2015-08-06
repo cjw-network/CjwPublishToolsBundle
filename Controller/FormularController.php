@@ -10,6 +10,7 @@
 
 namespace Cjw\PublishToolsBundle\Controller;
 
+use Cjw\PublishToolsBundle\Services\FormHandlerService;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use eZ\Bundle\EzPublishCoreBundle\Controller;
@@ -37,13 +38,13 @@ class FormularController extends Controller
      */
     private function getServices()
     {
-        $this->repository          = $this->getRepository();
-        $this->request             = $this->getRequest();
-        $this->contentService      = $this->repository->getContentService();
-        $this->locationService     = $this->repository->getLocationService();
-        $this->contentTypeService  = $this->repository->getContentTypeService();
-        $this->formBuilderService  = $this->get( 'cjw_publishtools.formbuilder.functions' );
-        $this->formHandlerService  = $this->get( 'cjw_publishtools.formhandler.functions' );
+        $this->repository         = $this->getRepository();
+        $this->request            = $this->getRequest();
+        $this->contentService     = $this->repository->getContentService();
+        $this->locationService    = $this->repository->getLocationService();
+        $this->contentTypeService = $this->repository->getContentTypeService();
+        $this->formBuilderService = $this->get( 'cjw_publishtools.formbuilder.functions' );
+        $this->formHandlerService = $this->get( 'cjw_publishtools.formhandler.functions' );
         $this->initialLanguageCode = $this->repository->getContentLanguageService()->getDefaultLanguageCode();
         $this->userService         = $this->repository->getUserService();
     }
@@ -94,7 +95,7 @@ class FormularController extends Controller
                                             'contentType'     => $contentType->fieldDefinitionsByIdentifier,
                                             'currentUserId'   => $this->repository->getCurrentUser()->id );
 
-                $response = $this->processHandlers( 'formcollector_config'.':'.$contentType->identifier, $form->getData(), $handlerParameters );
+                $response = $this->processHandlers( 'formcollector_config'.':'.$contentType->identifier, $form->getData(), $handlerParameters, $form );
 
                 if ( $response !== false )
                 {
@@ -107,6 +108,20 @@ class FormularController extends Controller
         $params['location'] = $location;
         $params['content'] = $content;
         $params['form'] = $form->createView();
+
+        foreach($params['form']->vars['value'] as $contentTypeIdentifier => $dataType)
+        {
+            //e.g ezstring___lastname
+            $FullContentTypeName = explode(FormHandlerService::separator,$contentTypeIdentifier);
+            //e.g ezstring
+            $ezDataType = $FullContentTypeName[0];
+
+            //e.g lastname
+            $identifierName = $FullContentTypeName[1];
+
+            //e.g on Twig {{ getFullContentName['lastname'] }} equals 'ezstring__lastname'
+            $params['getFullContentName'][$identifierName] = $contentTypeIdentifier;
+        }
 
         return $this->get( 'ez_content' )->viewLocation( $locationId, $viewType, $layout, $params );
     }
@@ -143,7 +158,7 @@ class FormularController extends Controller
             if ( $form->isValid() )
             {
                 // process configured handlers
-                $response = $this->processHandlers( 'formbuilder_config'.':'.$identifier, $form->getData(), array() );
+                $response = $this->processHandlers( 'formbuilder_config'.':'.$identifier, $form->getData(), array(), $form );
 
                 if ( $response !== false )
                 {
@@ -299,7 +314,7 @@ class FormularController extends Controller
                     if ( $form->isValid() )
                     {
                         // process configured handlers
-                        $response = $this->processHandlers( 'user_register_config:handlers', $form->getData(), array() );
+                        $response = $this->processHandlers( 'user_register_config:handlers', $form->getData(), array(), $form );
 
                         if ( $response !== false )
                         {
@@ -371,7 +386,7 @@ class FormularController extends Controller
      *
      * @return mixed $resultAction
      */
-    private function processHandlers( $configIdentifierStr, $formDataObj, $handlerParameters )
+    private function processHandlers( $configIdentifierStr, $formDataObj, $handlerParameters, $form )
     {
         $response = false;
 
@@ -389,7 +404,7 @@ class FormularController extends Controller
                 // object member.
                 if( method_exists( $this->formHandlerService, $handlerClass ) )
                 {
-                    $response = $this->formHandlerService->$handlerClass( $formDataObj, $handlerConfig, $handlerParameters );
+                    $response = $this->formHandlerService->$handlerClass( $formDataObj, $handlerConfig, $handlerParameters, $form );
                 }
             }
         }

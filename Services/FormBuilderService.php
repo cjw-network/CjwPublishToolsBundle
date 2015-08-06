@@ -10,6 +10,7 @@
 
 namespace Cjw\PublishToolsBundle\Services;
 
+use Symfony\Component\Form\FormBuilder;
 use Symfony\Component\Yaml\Yaml;
 //use eZ\Publish\Core\FieldType\XmlText\Input\EzXml as EzXmlInput;
 
@@ -221,6 +222,11 @@ class FormBuilderService
                     $fieldArr2 = false;
 
     //                $fieldArr['position'] = $field->position;
+                    // TODO check if the name for a language code is set otherwise fall back
+                    // maybe use ez
+
+                    //var_dump( $field->names );
+
                     $fieldArr['label']    = $field->names[$languageCode];
                     $fieldArr['required'] = $field->isRequired;
                     $fieldArr['choices']  = false;
@@ -232,19 +238,19 @@ class FormBuilderService
                     switch ( $field->fieldTypeIdentifier )
                     {
                         case 'ezstring':
-                            $formFieldIdentifier = 'ezstring:'.$field->identifier;
+                            $formFieldIdentifier = 'ezstring' . FormHandlerService::separator . $field->identifier;
                             $fieldArr['type'] = 'text';
                             $fieldArr['value'] = $field->defaultValue->text;
                             break;
 
                         case 'eztext':
-                            $formFieldIdentifier = 'eztext:'.$field->identifier;
+                            $formFieldIdentifier = 'eztext' . FormHandlerService::separator . $field->identifier;
                             $fieldArr['type'] = 'textarea';
                             $fieldArr['value'] = $field->defaultValue->text;
                             break;
 
                         case 'ezxmltext' :
-                            $formFieldIdentifier = 'ezxmltext:'.$field->identifier;
+                            $formFieldIdentifier = 'ezxmltext' . FormHandlerService::separator . $field->identifier;
                             $fieldArr['type'] = 'textarea';
 // ToDo
 //                            $fieldArr['value'] = $this->ezXmltextToHtml( $content, $field );
@@ -252,20 +258,20 @@ class FormBuilderService
                             break;
 
                         case 'ezemail':
-                            $formFieldIdentifier = 'ezemail:'.$field->identifier;
+                            $formFieldIdentifier = 'ezemail' . FormHandlerService::separator . $field->identifier;
                             $fieldArr['type'] = 'email';
                             $fieldArr['value'] = $field->defaultValue->email;
                             break;
 
                         case 'ezboolean':
-                            $formFieldIdentifier = 'ezxmltext:'.$field->identifier;
+                            $formFieldIdentifier = 'ezxmltext' . FormHandlerService::separator . $field->identifier;
                             $fieldArr['type'] = 'checkbox';
                             $fieldArr['value'] = $field->defaultValue->bool;
                             break;
 
                         case 'ezuser' :
 // ToDo: many
-                            $formFieldIdentifier = 'ezuser:'.$field->identifier.':login';
+                            $formFieldIdentifier = 'ezuser' . FormHandlerService::separator . $field->identifier . FormHandlerService::separator .'login';
                             $fieldArr['type'] = 'text';
                             $fieldArr['label'] = 'cjw_publishtools.formbuilder.user.login';
                             $fieldArr['value'] = '';
@@ -274,7 +280,7 @@ class FormBuilderService
                             $fieldArr1['type'] = 'email';
                             $fieldArr1['label'] = 'cjw_publishtools.formbuilder.user.email';
                             $fieldArr1['required'] = true;
-                            $formFieldIdentifier1 = 'ezuser:'.$field->identifier.':email';
+                            $formFieldIdentifier1 = 'ezuser' . FormHandlerService::separator . $field->identifier . FormHandlerService::separator .'email';
                             $fieldArr1['value'] = '';
                             $fieldArr1['choices']  = false;
 
@@ -282,14 +288,14 @@ class FormBuilderService
                             $fieldArr2['type'] = 'password';
                             $fieldArr2['label'] = 'cjw_publishtools.formbuilder.user.password';
                             $fieldArr2['required'] = true;
-                            $formFieldIdentifier2 = 'ezuser:'.$field->identifier.':password';
+                            $formFieldIdentifier2 = 'ezuser' . FormHandlerService::separator . $field->identifier . FormHandlerService::separator .'password';
                             $fieldArr2['value'] = '';
                             $fieldArr2['choices']  = false;
                             break;
 
                         // ToDo: multiple / single, select / radio / checkbox, etc.
                         case 'ezselection':
-                            $formFieldIdentifier = 'ezselection:'.$field->identifier;
+                            $formFieldIdentifier = 'ezselection' . FormHandlerService::separator . $field->identifier;
                             $fieldArr['type'] = 'choice';
                             $fieldArr['choices'] = array();
 
@@ -317,7 +323,7 @@ class FormBuilderService
                             break;
 
                         default:
-                            $formFieldIdentifier = 'default:'.$field->identifier;
+                            $formFieldIdentifier = 'default' . FormHandlerService::separator . $field->identifier;
                             $fieldArr['type'] = 'text';
                             $fieldArr['value'] = '';
                     }
@@ -396,7 +402,7 @@ class FormBuilderService
         // Setting the fields values
         foreach ( $formDataObj as $key => $value )
         {
-            $keyArr = explode( ':', $key );
+            $keyArr = explode( FormHandlerService::separator, $key );
             $property = $keyArr['1'];
 
             switch ( $keyArr['0'] )
