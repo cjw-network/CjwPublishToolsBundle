@@ -1,2 +1,13 @@
+20150730 - cjw_fetch_content new parameter  main_location_only
+           if true => only mainlocations will be included in the result
+
+       {% set listChildren = cjw_fetch_content( [ currentLocationId ],
+                                                { 'main_location_only': true } ) %}
+
+
+20150721 - sortby jetzt als array mit arrays für jede sortclause
+         - 2 array items means sorts by content meta / attribute
+         - 3 array items means sorts by content field ( content-class, content-field, sort-order: ASC/DESC )
+
 20150703 - PublishToolsService umbenannt von "cjw.publishtools" zu "cjw_publishtools"
          - Formbuilder-Config-Datei kann jetzt per YAML-Parameter angegeben werden; Fallback in PublishTools config
