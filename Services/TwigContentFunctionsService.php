@@ -12,10 +12,7 @@
 namespace Cjw\PublishToolsBundle\Services;
 
 use eZ\Publish\API\Repository\Repository;
-use eZ\Publish\Core\Base\Exceptions\InvalidArgumentException;
-use eZ\Publish\Core\FieldType\RichText\Converter as RichTextConverterInterface;
 use eZ\Publish\Core\MVC\ConfigResolverInterface;
-use eZ\Publish\Core\MVC\Symfony\Matcher\ContentBased\Identifier\ContentType;
 use eZ\Publish\Core\Repository\Values\Content\Content;
 use eZ\Publish\Core\Repository\Values\Content\Location;
 use Psr\Log\LoggerInterface;
@@ -23,7 +20,6 @@ use Symfony\Component\DependencyInjection\Container;
 use Twig_Extension;
 use Twig_Environment;
 use Twig_SimpleFunction;
-use Twig_Template;
 
 /**
  * Twig content extension for eZ Publish specific usage.
@@ -78,7 +74,6 @@ class TwigContentFunctionsService extends Twig_Extension
 
     protected $cacheContentTypeIdentifier = array();
 
-
     public function __construct(
         Container $container,
         Repository $repository,
@@ -86,7 +81,6 @@ class TwigContentFunctionsService extends Twig_Extension
         LoggerInterface $logger = null
     )
     {
-
         $this->renderLocationViewResources = $resolver->getParameter( 'location_view' );
         //  var_dump( $this->renderLocationViewSettings );
 
@@ -98,7 +92,6 @@ class TwigContentFunctionsService extends Twig_Extension
         // add html comments of rendered template into html
        // $this->templateDebug = true;
     }
-
 
     /**
      * Initializes the template runtime (aka Twig environment).
@@ -146,7 +139,6 @@ class TwigContentFunctionsService extends Twig_Extension
         return 'cjw_publishtools_twig_content_extension';
     }
 
-
     /**
      *  render a viewtemplate with a twigfunction uses the ezpulish  override.yml
      *
@@ -155,14 +147,13 @@ class TwigContentFunctionsService extends Twig_Extension
      *     => faster is the following call
      *
      *     {{ cjw_render_location( {'location': locationObject, 'viewType': 'line'} ) }}
-
+     *
      * @param array  $parameters  hash
      *
      * @return string
      */
     public function renderLocation( array $params )
     {
-
         $viewType = $params['viewType'];
 
         if ( isset( $params['location'] ) && $params['location'] instanceof Location )
@@ -191,13 +182,12 @@ class TwigContentFunctionsService extends Twig_Extension
 
         $this->template = $this->environment->loadTemplate( $templateFileName );
 
-
         $locationObject = $this->repository->getLocationService()->loadLocation( $locationId );
 
         $contentId = $locationObject->contentInfo->id;
         $contentObject = $this->repository->getContentService()->loadContent( $contentId );
 
-       // $view = 'CjwPublishToolsBundle::line.html.twig';
+        // $view = 'CjwPublishToolsBundle::line.html.twig';
 
         // find override template
         $template = $this->getOverrideTemplate( $locationObject, $contentObject, $viewType );
@@ -209,6 +199,15 @@ class TwigContentFunctionsService extends Twig_Extension
 
         // name of the rendered template
         $params['_template'] = $template;
+
+        // loop params array, and set as tpl var
+        if( isset( $params['params'] ) )
+        {
+            foreach( $params['params'] as $param => $value )
+            {
+                $params[$param] = $value;
+            }
+        }
 
         $temapleRenderedContent = $this->getTemplateEngine()->render( $template, $params );
 
@@ -223,12 +222,6 @@ class TwigContentFunctionsService extends Twig_Extension
 
         return  $temapleRenderedContent;
     }
-
-
-
-
-
-
 
     /**
      * Use ez override yml for override Rules which are used vor  default ViewController::viewLocation
@@ -247,7 +240,6 @@ class TwigContentFunctionsService extends Twig_Extension
      */
     private function getOverrideTemplate( Location $location, Content $content, $viewType = line )
     {
-
         //
         //        location_view:
         //            line:
@@ -274,10 +266,6 @@ class TwigContentFunctionsService extends Twig_Extension
 
         foreach( $configViewType as $configOverrideName => $configOverrideItem )
         {
-            //$hashKey = $viewType. '|'. $configOverrideName;
-
-            // den namen nicht speichern um später schnell auf hash zugreifen zu können
-            $hashKey = $viewType;
             $template = $configOverrideItem['template'];
 
             $matchArray = $configOverrideItem['match'];
@@ -297,7 +285,6 @@ class TwigContentFunctionsService extends Twig_Extension
                 // if not return false
                 foreach( $matchArray as $matchIdentifier => $matchIdentifierValue )
                 {
-
                     //var_dump( $matchIdentifierValue );
                     switch( $matchIdentifier )
                     {
@@ -307,7 +294,6 @@ class TwigContentFunctionsService extends Twig_Extension
                         // with the optimized version the ContentTypeIdentifier for an id will be cached in RAM
                         // TODO may be override the original Identifier\ContentType class or write an own CjwPublishTools\Identifier\ContentType
                         case 'Identifier\ContentType':
-
                             $contentTypeId = $content->contentInfo->contentTypeId;
                             $contentTypeIdentifier = $this->getContentTypeIdentifier( $contentTypeId );
 
@@ -323,11 +309,10 @@ class TwigContentFunctionsService extends Twig_Extension
                                 // if not match set false
                                 $isOverrideMatch = false;
                             }
-                            break;
+                        break;
 
                         // using ez matchers
                         default:
-
                             // using Identifier/ContentType matcher von ez
                             //$namespace = 'eZ\Publish\Core\MVC\Symfony\Matcher\ContentBased\Identifier\ContentType';
 
@@ -347,9 +332,8 @@ class TwigContentFunctionsService extends Twig_Extension
                             {
                                // echo "<br>OVERRIDE_RULE_MATCH:  $viewType: $configOverrideName: match: $matchIdentifier: $matchIdentifierValue";
                             }
-                            break;
+                        break;
                     }
-
                 }
             }
 
@@ -357,14 +341,11 @@ class TwigContentFunctionsService extends Twig_Extension
             {
                 return $template;
             }
-
         }
 
         $defaultTemplate = "CjwPublishToolsBundle::default_location_view.html.twig";
         return $defaultTemplate;
     }
-
-
 
     /**
      * @return \Symfony\Component\Templating\EngineInterface
@@ -397,12 +378,10 @@ class TwigContentFunctionsService extends Twig_Extension
      */
     public function getContentTypeIdentifier( $contentTypeId )
     {
-
         if ( isset( $this->cacheContentTypeIdentifier[$contentTypeId] ) )
         {
             return $this->cacheContentTypeIdentifier[$contentTypeId];
         }
-
 
         $cs = $this->repository->getContentTypeService();
         try
@@ -417,5 +396,4 @@ class TwigContentFunctionsService extends Twig_Extension
             return false;
         }
     }
-
 }
