@@ -228,7 +228,13 @@ class PublishToolsService
      */
     public function loadContentById( $contentId )
     {
-        return $this->contentService->loadContent( $contentId );
+        try {
+            return $this->contentService->loadContent( $contentId );
+        } catch( \eZ\Publish\API\Repository\Exceptions\UnauthorizedException $error ) {
+            return false;
+        } catch( \eZ\Publish\API\Repository\Exceptions\NotFoundException $error ) {
+            return false;
+        }
     }
 
     /**
@@ -356,6 +362,19 @@ class PublishToolsService
             $criterion[] = new Criterion\Location\Depth( Criterion\Operator::LTE, $depth );
         }
 
+
+        // main_node_only => true => only include mainlocatione
+        if ( isset( $params['main_location_only'] ) )
+        {
+            // true, 1, '1'
+            if ( (int) $params['main_location_only'] === 1 )
+            {
+                // only include mainLocations
+                $criterion[] = new Criterion\Location\IsMainLocation( Criterion\Location\IsMainLocation::MAIN );
+            }
+        }
+
+
         if ( isset( $params['include'] ) && is_array( $params['include'] ) && count( $params['include'] ) > 0 )
         {
             $criterion[] = new Criterion\ContentTypeIdentifier( $params['include'] );
@@ -388,13 +407,41 @@ class PublishToolsService
         $sortClauses = array();
         if ( isset( $params['sortby'] ) && is_array( $params['sortby'] ) && count( $params['sortby'] ) > 0 )
         {
-            foreach ( $params['sortby'] as $sortField => $sortOrder )
+            foreach ( $params['sortby'] as $sortKey => $sortArray )
             {
-                $newSortClause = $this->generateSortClauseFromString( $sortField, $sortOrder );
-
-                if ( $newSortClause !== false )
+                // deprecated, for backwards compability (sort by content meta / attribute)
+                if ( is_array( $sortArray ) === false )
                 {
-                    $sortClauses[] = $newSortClause;
+                    $newSortClause = $this->generateSortClauseFromString( $sortKey, $sortArray );
+
+                    if ( $newSortClause !== false )
+                    {
+                        $sortClauses[] = $newSortClause;
+                    }
+                }
+
+                // 2 array items means sorts by content meta / attribute
+                if ( is_array( $sortArray ) && count( $sortArray ) == 2 )
+                {
+                    $newSortClause = $this->generateSortClauseFromString( $sortArray['0'], $sortArray['1'] );
+
+                    if ( $newSortClause !== false )
+                    {
+                        $sortClauses[] = $newSortClause;
+                    }
+                }
+
+                // 3 array items means sorts by content field
+                if ( is_array( $sortArray ) && count( $sortArray ) == 3 )
+                {
+                    $sortOrder = 'ascending';
+                    if ( $sortArray['2'] == 'DESC' || $sortArray['2'] == 'descending' )
+                    {
+                        $sortOrder = 'descending';
+                    }
+
+                    $lang = $this->getPrioritizedLanguages();
+                    $sortClauses[] = new SortClause\Field( $sortArray['0'], $sortArray['1'], $sortOrder, $lang['0'] );
                 }
             }
         }
@@ -447,7 +494,7 @@ class PublishToolsService
         if ( isset( $params['language'] ) && is_array( $params['language'] ) && count( $params['language'] ) > 0 )
         {
 // ToDo: combine with and, always available?
-            $criterion[] = new Criterion\LangueCode( $params['language'] );
+            $criterion[] = new Criterion\LanguageCode( $params['language'] );
 //            $criterion[] = new Criterion\LanguageCode( $this->getDefaultLangCode() );
         }
         else
@@ -593,7 +640,7 @@ class PublishToolsService
         $result = false;
 
         if ( $sortOrder === 'DESC' )
-        {
+        {some really basic example templates, usefull for testing the frontend siteaccess
             $sortOrder = LocationQuery::SORT_DESC;
         }
         else
