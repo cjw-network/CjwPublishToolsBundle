@@ -12,14 +12,10 @@
 namespace Cjw\PublishToolsBundle\Services;
 
 use eZ\Publish\Core\Base\Exceptions\InvalidArgumentException;
-//use eZ\Publish\Core\FieldType\RichText\Converter as RichTextConverterInterface;
 use eZ\Publish\Core\MVC\ConfigResolverInterface;
-//use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Container;
 use Twig_Extension;
-//use Twig_Environment;
 use Twig_SimpleFunction;
-//use Twig_Template;
 
 /**
  * Twig config extension for eZ Publish specific usage.

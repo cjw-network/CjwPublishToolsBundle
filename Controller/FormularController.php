@@ -38,13 +38,13 @@ class FormularController extends Controller
      */
     private function getServices()
     {
-        $this->repository         = $this->getRepository();
-        $this->request            = $this->getRequest();
-        $this->contentService     = $this->repository->getContentService();
-        $this->locationService    = $this->repository->getLocationService();
-        $this->contentTypeService = $this->repository->getContentTypeService();
-        $this->formBuilderService = $this->get( 'cjw_publishtools.formbuilder.functions' );
-        $this->formHandlerService = $this->get( 'cjw_publishtools.formhandler.functions' );
+        $this->repository          = $this->getRepository();
+        $this->request             = $this->getRequest();
+        $this->contentService      = $this->repository->getContentService();
+        $this->locationService     = $this->repository->getLocationService();
+        $this->contentTypeService  = $this->repository->getContentTypeService();
+        $this->formBuilderService  = $this->get( 'cjw_publishtools.formbuilder.functions' );
+        $this->formHandlerService  = $this->get( 'cjw_publishtools.formhandler.functions' );
         $this->initialLanguageCode = $this->repository->getContentLanguageService()->getDefaultLanguageCode();
         $this->userService         = $this->repository->getUserService();
     }

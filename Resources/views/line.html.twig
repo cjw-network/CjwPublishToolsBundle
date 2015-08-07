@@ -1,5 +1,8 @@
 <div class="class-{{ content.contentInfo.contentTypeId }} content-view-line">
     <h2>
+        {#<a href="{{ path( location ) }}">#}
+        {#<a href="{{ path( 'ez_urlalias', {'locationId': location.id} ) }}">#}
+        {#<a href="{{ path( 'ez_urlalias', {'locationId': content.contentInfo.mainLocationId} ) }}">#}
         <a href="{{ path( location ) }}">
             {{ ez_content_name( content ) }} ({{ location.id  }} : {{ content.contentInfo.mainLocationId  }})
         </a>

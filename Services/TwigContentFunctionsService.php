@@ -354,7 +354,7 @@ class TwigContentFunctionsService extends Twig_Extension
     {
         return $this->container->get( 'templating' );
     }
-//
+
 //    /**
 //     * @return \Psr\Log\LoggerInterface|null
 //     */
@@ -370,7 +370,6 @@ class TwigContentFunctionsService extends Twig_Extension
 //    {
 //        return $this->container->get( 'ezpublish.api.repository' );
 //    }
-//
 
     /**
      * @param $contentTypeId

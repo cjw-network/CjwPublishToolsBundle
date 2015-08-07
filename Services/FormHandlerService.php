@@ -249,13 +249,13 @@ class FormHandlerService
             $message = \Swift_Message::newInstance()
 //                ->setEncoder(\Swift_Encoding::get7BitEncoding())
 //                ->setCharset('UTF-8')
-                ->setEncoder(\Swift_Encoding::get8BitEncoding())
+                ->setEncoder( \Swift_Encoding::get8BitEncoding() )
                 ->setSubject( $subject )
                 ->setFrom( $from )
                 ->setTo( $to )
                 ->setBcc( $bcc )
-                ->setBody( $bodyTextHtml, 'text/html')
-                ->addPart(  $bodyTextPlain, 'text/plain'  );
+                ->setBody( $bodyTextHtml, 'text/html' )
+                ->addPart( $bodyTextPlain, 'text/plain' );
 
             if ( $debug === false )
             {
@@ -357,5 +357,27 @@ class FormHandlerService
     public function contentEditHandler()
     {
         return false;
+    }
+
+    protected function getFormDataArray( $formDataObj )
+    {
+        $formDataArr = array();
+        foreach ( $formDataObj as $formIdentifier => $formValue )
+        {
+            // ezstring:first_name  => ezstring__first_name
+            $keyArr = explode( FormHandlerService::separator, $formIdentifier );
+            // ezstring
+            $contentType = $keyArr['0'];
+            // first_name
+            $fieldIdentifier = $keyArr['1'];
+
+            $formDataArr[$fieldIdentifier] = array( 'value' => $formValue,
+                'content_type'  => $contentType,
+                'field_identifier' => $fieldIdentifier,
+                'form_identifier' => $formIdentifier
+            );
+        }
+
+        return $formDataArr;
     }
 }
