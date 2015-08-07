@@ -15,7 +15,6 @@ use eZ\Publish\API\Repository\Repository;
 use eZ\Publish\API\Repository\Values\Content\Query;
 use eZ\Publish\API\Repository\Values\Content\Query\SortClause;
 use eZ\Publish\API\Repository\Values\Content\Query\Criterion;
-//use eZ\Publish\API\Repository\Values\Content\Query\Criterion\Location;
 use eZ\Publish\API\Repository\Values\Content\Location;
 use eZ\Publish\API\Repository\Values\Content\LocationQuery;
 use eZ\Publish\Core\MVC\ConfigResolverInterface;
@@ -172,8 +171,7 @@ class PublishToolsService
             }
         }
 
-        $result = array( 'items' => $pathArr,
-                         'separator' => $separator );
+        $result = array( 'items' => $pathArr, 'separator' => $separator );
 
         return $result;
     }
@@ -362,7 +360,6 @@ class PublishToolsService
             $criterion[] = new Criterion\Location\Depth( Criterion\Operator::LTE, $depth );
         }
 
-
         // main_node_only => true => only include mainlocatione
         if ( isset( $params['main_location_only'] ) )
         {
@@ -373,7 +370,6 @@ class PublishToolsService
                 $criterion[] = new Criterion\Location\IsMainLocation( Criterion\Location\IsMainLocation::MAIN );
             }
         }
-
 
         if ( isset( $params['include'] ) && is_array( $params['include'] ) && count( $params['include'] ) > 0 )
         {
@@ -495,32 +491,13 @@ class PublishToolsService
         {
 // ToDo: combine with and, always available?
             $criterion[] = new Criterion\LanguageCode( $params['language'] );
-//            $criterion[] = new Criterion\LanguageCode( $this->getDefaultLangCode() );
         }
         else
         {
-             // get the default language
-//             $defaultLanguageCode = $this->getDefaultLangCode();
-//               $criterion[] = new Criterion\LanguageCode( $defaultLanguageCode );
-            //$criterion[] = new Criterion\LanguageCode( array( 'ger-DE', 'eng-GB' ) );
-
             // only include languages which are defined in siteaccess config  system default|siteaccess languages
             // if more than on a correct bitmask is build to include all object where one of the language is set
             $criterion[] = new Criterion\LanguageCode( $this->getPrioritizedLanguages() );
         }
-
-        // disable extra query for count because totalCount is already included in searchResult
-        // and this call increase the number of stash calls with bigger size of included objects
-        // search count
-        // https://doc.ez.no/display/EZP/2.+Browsing,+finding,+viewing#id-2.Browsing,finding,viewing-Performingapuresearchcount
-        //        $searchCount = false;
-        //        if ( isset( $params['count'] ) && $params['count'] === true )
-        //        {
-        //            $queryCount = new LocationQuery( array() );
-        //            $queryCount->criterion = new Criterion\LogicalAnd( $criterion );
-        //            $queryCount->sortClauses = $sortClauses;
-        //            $searchCount = $this->searchService->findLocations( $queryCount )->totalCount;
-        //        }
 
         $querySearch = new LocationQuery( array( 'offset' => $offset, 'limit' => $limit ) );
         $querySearch->criterion = new Criterion\LogicalAnd( $criterion );
@@ -548,12 +525,6 @@ class PublishToolsService
             }
             else
             {
-//                $childLocationId = $searchItem->valueObject->contentInfo->mainLocationId;
-//                $searchItem->valueObject is already the Value/Location
-//                so we do not fetch it again to reduce api calls !!
-//
-//                $childLocationId = $searchItem->valueObject->id;
-//                $locationList[] = $this->locationService->loadLocation( $childLocationId );
                 $locationList[] = $searchItem->valueObject;
             }
         }
@@ -640,7 +611,7 @@ class PublishToolsService
         $result = false;
 
         if ( $sortOrder === 'DESC' )
-        {some really basic example templates, usefull for testing the frontend siteaccess
+        {
             $sortOrder = LocationQuery::SORT_DESC;
         }
         else
