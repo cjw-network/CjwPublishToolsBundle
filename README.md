@@ -61,8 +61,8 @@ The Bundle contains three services and some example templates.
 The three services are a **TwigFunctionService** that provides some Twig Template Tags:
 
 - cjw_content_fetch ( [parameters](#cjw_content_fetch-parameters) , [result structure](#cjw_content_fetch-result) , [example](#cjw_content_fetch-example) )
-- cjw_breadcrumb
-- cjw_treemenu
+- cjw_breadcrumb ( [example](https://github.com/cjw-network/CjwPublishToolsBundle/blob/master/Resources/views/parts/breadcrumb.html.twig) )
+- cjw_treemenu ( [example](https://github.com/cjw-network/CjwPublishToolsBundle/blob/master/Resources/views/parts/treemenu-test.html.twig) )
 - [cjw_content_download_file](#cjw_content_download_file)
 - [cjw_load_content_by_id](#cjw_load_content_by_id)	(maybe renaming this to cjw_content_load_by_id in the future)
 - cjw_get_content_type_identifier						(maybe renaming this to cjw_content_get_type_identifier in the future)
@@ -126,9 +126,12 @@ You can easily fetch content in twig templates and build Websites without hackin
 		</div>
 	{% endblock %}
 	
+here you can find an example include temple for pagination: [:parts:navigator.html.twig](https://github.com/cjw-network/CjwPublishToolsBundle/blob/master/Resources/views/parts/navigator.html.twig)
+
 ***
 
-###cjw_content_fetch Parameters<a name="cjw_content_fetch-parameters"></a>
+<a name="cjw_content_fetch-parameters"></a>
+###cjw_content_fetch Parameters
 
 | Name | Type | Default | Required | Description |
 |---|---|---|---|---|
@@ -149,7 +152,8 @@ You can easily fetch content in twig templates and build Websites without hackin
 
 ***
 
-###cjw_content_fetch Result array structure<a name="cjw_content_fetch-result"></a>
+<a name="cjw_content_fetch-result"></a>
+###cjw_content_fetch Result array structure
 
 	Array
 		|--[location.id.1]
@@ -171,7 +175,8 @@ You can easily fetch content in twig templates and build Websites without hackin
 
 ***
 
-###cjw_content_fetch example<a name="cjw_content_fetch-example"></a>
+<a name="cjw_content_fetch-example"></a>
+###cjw_content_fetch example
 
 fetch an tree of nodes / locations for an given node / location id get the parent and count, sort by published date
 
@@ -179,7 +184,7 @@ fetch an tree of nodes / locations for an given node / location id get the paren
 	
 	{def $node_id = 2
 		 $limit = 10
-		 $offset = 0
+		 $offset = 10
 		 $depth = 5
 		 $include = array( 'article' )
 
@@ -202,11 +207,11 @@ fetch an tree of nodes / locations for an given node / location id get the paren
 		{$item|attribute( show, 5 )}
 	{/foreach}
 	
-**ezp 5.x twig:**<a name="cjw_load_content_by_id"></a>
+**ezp 5.x twig:**
 	
 	{% set location_id = 2 %}
 	{% set limit = 10 %}
-	{% set offset = 0 %}
+	{% set offset = 10 %}
 	{% set include = [ 'article' ] %}
 	{% set depth = 5 %}
 	{% set content_object = false %}
@@ -234,9 +239,65 @@ fetch an tree of nodes / locations for an given node / location id get the paren
 		#}
 	{% endfor %}
 	
+#### more cjw_content_fetch examples
+
+get an single location object by location.id
+	
+	{% set locationId = 2 %}
+	{% set locationObject = cjw_fetch_content( [ locationId ], { 'depth': 0 } )[locationId]['0'] %}
+	{{ dump( locationObject ) }}
+	
+
+get an single content object by location.id
+	
+	{% set locationId = 2 %}
+	{% set contentObject = cjw_fetch_content( [ locationId ], { 'depth': 0, 'datamap': true } )[locationId]['0'] %}
+	{{ dump( contentObject ) }}
+	
+
+get multiple location objects by location.ids
+	
+	{% set locationId1 = 2 %}
+	{% set locationId2 = 43 %}
+
+	{% set locationArray= cjw_fetch_content( [ locationId1, locationId2 ], { 'depth': 0 } )%}
+
+	{% set locationOject1 = locationArray[locationId1]['0'] %}
+	{% set locationOject2 = locationArray[locationId2]['0'] %}
+
+	{{ dump( locationObject1 ) }}
+	{{ dump( locationObject2 ) }}
+	
 ***
 
-###cjw_content_download_file example<a name="cjw_content_download_file"></a>
+<a name="cjw_load_content_by_id"></a>
+###cjw_load_content_by_id example
+
+get an content object by an content object id
+this is usefull for fetching related content objects
+	
+	{% if not ez_is_field_empty( content, 'related' ) %}
+		{% set destinationContentIds = ez_field_value( content, 'related' ).destinationContentIds %}
+
+		{% for destinationContentId in destinationContentIds %}
+			{% set relatedContent = cjw_load_content_by_id( destinationContentId ) %}
+			{#{ dump( relatedContent ) }#}
+
+			{{ ez_content_name( relatedContent ) }}
+
+			{#{ render( controller( 'ez_content:viewLocation', { 'locationId': versionInfo.contentInfo.mainLocationId, 'viewType': 'line' } ) ) }#}
+		{% endfor %}
+	{% endif %}
+	
+get an related image (main_image):
+	
+	{% set mainImage = cjw_load_content_by_id( ez_field_value( content, 'main_image' ).destinationContentIds['0'] ) %}
+	{{ dump( mainImage ) }}
+	
+***
+
+<a name="cjw_content_download_file"></a>
+###cjw_content_download_file example
 
 override the ez ezbinaryfile field type template:
 	
@@ -257,7 +318,8 @@ the location view full template for the file content type
 	
 ***
 
-###cjw_file_exists example<a name="cjw_file_exists"></a>
+<a name="cjw_file_exists"></a>
+###cjw_file_exists example
 
 if you won't get an 500 error if an image not exists,
 
@@ -267,7 +329,7 @@ override the ezimage field type template:
 	{% spaceless %}
 		{% if not ez_is_field_empty( content, field ) %}
 			{# check if the original image exists #}
-			{% if cjw_file_exists( '.'~field.value.uri ) %}
+			{% if cjw_file_exists( '.'~field.value.uri ) and field.value.uri != null %}
 				{% set image_alias = ez_image_alias( field, versionInfo, parameters.alias|default( 'original' ) ) %}
 				{# check if the image variation exists #}
 				{% if image_alias.uri is defined %}
@@ -280,7 +342,8 @@ override the ezimage field type template:
 	
 ***
 
-###cjw_template_get/set_var example<a name="cjw_template_var"></a>
+<a name="cjw_template_var"></a>
+###cjw_template_get/set_var example
 	
 	<!DOCTYPE html>
 	<html>
@@ -305,7 +368,8 @@ override the ezimage field type template:
 	
 ***
 
-###cjw_render_location - a fast render controller "ez_content:viewLocation" replacement<a name="cjw_render_location"></a>
+<a name="cjw_render_location"></a>
+###cjw_render_location - a fast render controller "ez_content:viewLocation" replacement
 
 before:
 {{ render( controller(  'ez_content:viewLocation', { 'location': location 'viewType': 'line' } )  )  }}
