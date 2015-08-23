@@ -370,10 +370,12 @@ override the ezimage field type template:
 ###cjw_render_location - a fast render controller "ez_content:viewLocation" replacement
 
 before:
-{{ render( controller(  'ez_content:viewLocation', { 'location': location 'viewType': 'line' } )  )  }}
+
+    {{ render( controller(  'ez_content:viewLocation', { 'location': location 'viewType': 'line' } )  )  }}
 
 after:
-{{ cjw_render_location( {'location': location, 'viewType': 'line'} ) }}
+
+    {{ cjw_render_location( {'location': location, 'viewType': 'line'} ) }}
 
 ***
 
