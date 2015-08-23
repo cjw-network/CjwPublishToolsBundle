@@ -44,8 +44,8 @@ Discussion to this topic: [http://share.ez.no/forums/ez-publish-5-platform/ez-pu
 ##Installation
 
 - Download bundle
-- copy to directory "/<ezroot>/src/Cjw/PublishToolsBundle"
-- activate bundle in "/<ezroot>/ezpublish/EzPublishKernel.php" insert "new Cjw\PublishToolsBundle\CjwPublishToolsBundle()," in "registerBundles()" Array
+- copy to directory "/{ezroot}/src/Cjw/PublishToolsBundle"
+- activate bundle in "/{ezroot}/ezpublish/EzPublishKernel.php" insert "new Cjw\PublishToolsBundle\CjwPublishToolsBundle()," in "registerBundles()" Array
 - clear cache
 
 ToDo: composer install
