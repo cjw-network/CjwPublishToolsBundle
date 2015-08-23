@@ -16,8 +16,6 @@ This Bundle provides basic templating tools for building Websites with eZ Publis
 
 This Bundle is **Work in progress**.
 
-**full Documentation can be found at: [www.cjw-network.com](http://www.cjw-network.com)**
-
 ***
 
 ##Why CJW Publish Tools Bundle?
