@@ -144,7 +144,7 @@ here you can find an example include temple for pagination: [:parts:navigator.ht
 | parent | boolean | false | no | if true include parent node in result |
 | main_location_only | boolean | false | no | list only main locations |
 | filter_relation | array | not set | no | [ [ 'relation_field', 'contains', objectId ] ] |
-| filter_field | array | not set | no | [ [ 'date_to', '>', date().timestamp ] ] (in ezp 1411 the 'date_to' field needs to be set searchable! ) |
+| filter_field | array | not set | no | [ [ 'date_to', '>', date().timestamp ] ] in ezp 1411 the 'date_to' field needs to be set searchable! |
 | filter_search | array | not set | no | ToDo: not implemented yet |
 | filter_attribute | array | not set | no | ToDo: not implemented yet |
 
