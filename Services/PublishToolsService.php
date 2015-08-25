@@ -94,21 +94,21 @@ class PublishToolsService
      *
      * The following default parameters are set:
      * <pre>
-        array(
-            'offset'    => 0,
-            'rootName'  => false,
-            'separator' => ''
-        )
+     *  array(
+     *      'offset'    => 0,
+     *      'rootName'  => false,
+     *      'separator' => ''
+     *  )
      * </pre>
      *
      * @return array Path array containing the given (or default) separator and the fetched items.
      *
      * The array is defined like so:
      * <pre>
-        array(
-            'items'     => array( ... !TODO! .. ),
-            'separator' => ''
-        );
+     *  array(
+     *      'items'     => array( ... !TODO! .. ),
+     *      'separator' => ''
+     *  );
      * </pre>
      */
     public function getPathArr( $locationId = 0, array $params = array() )
@@ -182,10 +182,10 @@ class PublishToolsService
      *
      * @return array Array containing the user object and a boolean, whether the user is logged in.
      * <pre>
-        array(
-            'content'  => Values\User\User object,
-            'isLogged' => false
-        )
+     *  array(
+     *      'content'  => Values\User\User object,
+     *      'isLogged' => false
+     *  )
      * </pre>
      */
     public function getCurrentUser()
@@ -221,7 +221,7 @@ class PublishToolsService
     /**
      * Fetch content by contentId.
      *
-     * @param integer $contentId
+     * @param integer $contentId ID of the content object
      * @return \eZ\Publish\API\Repository\Values\Content\Content
      */
     public function loadContentById( $contentId )
@@ -245,10 +245,10 @@ class PublishToolsService
      *                             location list array.
      * @param array $params Parameters to control the fetch for the location list.
      * <pre>
-        array(
-            'depth'   => integer,
-            'datamap' => boolean
-        )
+     *  array(
+     *      'depth'   => integer,
+     *      'datamap' => boolean
+     *  )
      * </pre>
      *
      * @return array
@@ -427,8 +427,8 @@ class PublishToolsService
                     }
                 }
 
-                // 3 array items means sorts by content field
-                if ( is_array( $sortArray ) && count( $sortArray ) == 3 )
+                // 4 array items means sorts by content field
+                if ( is_array( $sortArray ) && count( $sortArray ) == 4 )
                 {
                     $sortOrder = 'ascending';
                     if ( $sortArray['2'] == 'DESC' || $sortArray['2'] == 'descending' )
@@ -436,8 +436,8 @@ class PublishToolsService
                         $sortOrder = 'descending';
                     }
 
-                    $lang = $this->getPrioritizedLanguages();
-                    $sortClauses[] = new SortClause\Field( $sortArray['0'], $sortArray['1'], $sortOrder, $lang['0'] );
+//                    $lang = $this->getPrioritizedLanguages();
+                    $sortClauses[] = new SortClause\Field( $sortArray['0'], $sortArray['1'], $sortOrder, $sortArray['3'] );
                 }
             }
         }
@@ -533,10 +533,12 @@ class PublishToolsService
     }
 
     /**
-     * Generate a sort clause depending on the location's sort fields (adapted from Donat's AbstractController.php)
+     * Generate a sort clause depending on the location's sort fields (adapted from Donat's
+     * AbstractController.php)
      *
-     * @param $sortField
-     * @param $sortOrder
+     * @param integer $sortField Numerous representation of the sort field (use "SORT_FIELD_…"
+     *                           constants)
+     * @param string $sortOrder LocationQuery::SORT_ASC or LocationQuery::SORT_DESC
      *
      * @return SortClause\ContentId|SortClause\ContentName|SortClause\DateModified|SortClause\DatePublished|SortClause\LocationDepth|SortClause\LocationPathString|SortClause\LocationPriority|SortClause\SectionIdentifier
      */
@@ -590,7 +592,7 @@ class PublishToolsService
     /**
      * Generates a sort clause, depending on the given sort field and sort order parameters.
      *
-     * @param $sortField string Sort field, which should be used for sorting. Can be one of the
+     * @param string $sortField Sort field, which should be used for sorting. Can be one of the
      *                          following:
      * <pre>
      *  - 'LocationPath'
@@ -601,7 +603,7 @@ class PublishToolsService
      *  - 'DateModified'
      *  - 'DatePublished'
      * </pre>
-     * @param $sortOrder string Sort order, which should be used for sorting. Can be <b>'ASC'</b> or
+     * @param string $sortOrder Sort order, which should be used for sorting. Can be <b>'ASC'</b> or
      *                          <b>'DESC'</b>.
      *
      * @return SortClause\ContentId|SortClause\ContentName|SortClause\DateModified|SortClause\DatePublished|SortClause\LocationDepth|SortClause\LocationPathString|SortClause\LocationPriority|SortClause\SectionIdentifier
@@ -650,8 +652,8 @@ class PublishToolsService
     /**
      * Fetches the string representation of a given content type ID (content type identifier).
      *
-     * @param $contentTypeId integer of the content type
-     * @return bool|string False on error or a string representing the given content type ID.
+     * @param integer $contentTypeId Numerous ID of the content type
+     * @return bool|string False on error or a string representation of the given content type ID.
      */
     public function getContentTypeIdentifier( $contentTypeId )
     {
@@ -670,16 +672,16 @@ class PublishToolsService
      * Returns an array of the priorized languages codes defined in YAML settings.
      *
      * <pre>
-        system:
-           default|siteaccess:
-              languages: [ger-DE,eng-GB]
+     *  system:
+     *     default|siteaccess:
+     *        languages: [ger-DE,eng-GB]
      * </pre>
      * @return array An array containing the proriozed languages code from YAML as follows:
      * <pre>
-        array(
-            'languageCode1',
-            'languageCode2'
-        )
+     *  array(
+     *      'languageCode1',
+     *      'languageCode2'
+     *  )
      * </pre>
      */
     public function getPrioritizedLanguages()
