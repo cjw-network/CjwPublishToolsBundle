@@ -138,15 +138,53 @@ here you can find an example include temple for pagination: [:parts:navigator.ht
 | offset | integer | 0 | no | if 0 than no offset |
 | include | array | not set | no | if empty not set than all Content Types |
 | datamap | boolean | false | no | wenn false dann wird das Location Object zurückgeliefert, wenn true wird das Content Object zurückgeliefert |
-| sortby | array | not set | no | [ [ 'article', 'publish_date', 'DESC' ], [ 'DatePublished', 'DESC' ] ] |
+| sortby | array | not set | no | [ [ 'article', 'publish_date', 'DESC', 'eng-GB' ], [ 'DatePublished', 'DESC' ] ] |
 | language | array | not set | no | if empty not set than current language |
 | count | boolean | false | no | if true include result count for pagination |
 | parent | boolean | false | no | if true include parent node in result |
 | main_location_only | boolean | false | no | list only main locations |
 | filter_relation | array | not set | no | [ [ 'relation_field', 'contains', objectId ] ] |
-| filter_field | array | not set | no | [ [ 'date_to', '>', date().timestamp ] ] |
+| filter_field | array | not set | no | [ [ 'date_to', '>', date().timestamp ] ] (in ezp 1411 the 'date_to' field needs to be set searchable! ) |
 | filter_search | array | not set | no | ToDo: not implemented yet |
 | filter_attribute | array | not set | no | ToDo: not implemented yet |
+
+**cjw_content_fetch sortby parameter parameters**
+
+The sortby parameter is an array of sortby parameter arrays.
+
+A sortby parameter array with **two items** means sort by object metatdata / attribute.
+The first parameter array item can be one of the following:
+
+- LocationPath
+- LocationDepth
+- LocationPriority
+- ContentName
+- ContentId
+- DateModified
+- DatePublished
+
+The second parameter array item is 'ASC' or 'DESC'
+
+A sortby parameter array with **4 items** means sort by field attribute.
+
+- first item is the content / class identifier
+- second item is is the field identifier
+- third item is 'ASC' or 'DESC'
+- forth item is the language or null if the field is not translatable
+
+If none sortby parameter are specified, the default sort will be the sort criterion of the parent node (specified in the admin backend).
+
+**cjw_content_fetch allowed operators for the filter_field parameter**
+
+- '='
+- '>'
+- '>='
+- '<'
+- '<='
+- 'in'
+- 'between'
+- 'like'
+- 'contains'
 
 ***
 
@@ -386,5 +424,3 @@ after:
 - easy to use frontend editing (add and edit content)
 - easy to use user register
 - hacking php classes is not needed
-
-
