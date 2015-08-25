@@ -1,15 +1,29 @@
-register:
+cjwpublishtools_user_register:
     path:     /register
     defaults: { _controller: CjwPublishToolsBundle:Formular:userRegister }
 
-formbuilder:
+cjwpublishtools_formbuilder:
     pattern:  /form/{identifier}
     defaults: { _controller: CjwPublishToolsBundle:Formular:formBuilder }
 
-frontend_editing_edit:
+cjwpublishtools_frontend_editing_edit:
     pattern:  /content/edit/{locationid}
     defaults: { _controller: CjwPublishToolsBundle:Formular:editForm }
 
-frontend_editing_add:
+cjwpublishtools_frontend_editing_add:
     pattern:  /content/add/{locationid}/{contenttypeid}
     defaults: { _controller: CjwPublishToolsBundle:Formular:addForm }
+
+cjwpublishtools_sitemaps_sitemap:
+    pattern: /sitemap.{_format}
+    defaults: { _controller: CjwPublishToolsBundle:Sitemaps:sitemap }
+    requirements:
+        _format: xml
+
+cjwpublishtools_sitemaps_robots:
+    pattern: /robots.txt
+    defaults: { _controller: CjwPublishToolsBundle:Sitemaps:robots }
+
+cjwpublishtools_search:
+    path: /search
+    defaults: { _controller: CjwPublishToolsBundle:Search:index }
