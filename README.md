@@ -16,8 +16,6 @@ This Bundle provides basic templating tools for building Websites with eZ Publis
 
 This Bundle is **Work in progress**.
 
-**full Documentation can be found at: [www.cjw-network.com](http://www.cjw-network.com)**
-
 ***
 
 ##Why CJW Publish Tools Bundle?
@@ -46,8 +44,8 @@ Discussion to this topic: [http://share.ez.no/forums/ez-publish-5-platform/ez-pu
 ##Installation
 
 - Download bundle
-- copy to directory "/ezpublish/src/Cjw/PublishToolsBundle"
-- activate bundle in "/ezpublish/EzPublishKernel.php" insert "new Cjw\PublishToolsBundle\CjwPublishToolsBundle()," in "registerBundles()" Array
+- copy to directory "/{ezroot}/src/Cjw/PublishToolsBundle"
+- activate bundle in "/{ezroot}/ezpublish/EzPublishKernel.php" insert "new Cjw\PublishToolsBundle\CjwPublishToolsBundle()," in "registerBundles()" Array
 - clear cache
 
 ToDo: composer install
@@ -372,10 +370,12 @@ override the ezimage field type template:
 ###cjw_render_location - a fast render controller "ez_content:viewLocation" replacement
 
 before:
-{{ render( controller(  'ez_content:viewLocation', { 'location': location 'viewType': 'line' } )  )  }}
+
+    {{ render( controller(  'ez_content:viewLocation', { 'location': location 'viewType': 'line' } )  )  }}
 
 after:
-{{ cjw_render_location( {'location': location, 'viewType': 'line'} ) }}
+
+    {{ cjw_render_location( {'location': location, 'viewType': 'line'} ) }}
 
 ***
 
