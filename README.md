@@ -144,7 +144,7 @@ here you can find an example include temple for pagination: [:parts:navigator.ht
 | parent | boolean | false | no | if true include parent node in result |
 | main_location_only | boolean | false | no | list only main locations |
 | filter_relation | array | not set | no | [ [ 'relation_field', 'contains', objectId ] ] |
-| filter_field | array | not set | no | [ [ 'date_to', '>', date().timestamp ] ] in ezp 1411 the 'date_to' field needs to be set searchable! |
+| filter_fields | array | not set | no | [ [ 'date_to', '>', date().timestamp ] ] in ezp 1411 the 'date_to' field needs to be set searchable! |
 | filter_search | array | not set | no | ToDo: not implemented yet |
 | filter_attribute | array | not set | no | ToDo: not implemented yet |
 
@@ -174,7 +174,7 @@ A sortby parameter array with **4 items** means sort by field attribute.
 
 If none sortby parameter are specified, the default sort will be the sort criterion of the parent node (specified in the admin backend).
 
-**cjw_content_fetch allowed operators for the filter_field parameter**
+**cjw_content_fetch allowed operators for the filter_fields parameter**
 
 - '='
 - '>'
