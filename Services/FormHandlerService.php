@@ -131,6 +131,12 @@ class FormHandlerService
             $location = $handlerParameters['location'];
         }
 
+        $app = false;
+        if ( isset( $handlerParameters['app'] ) )
+        {
+            $app = $handlerParameters['app'];
+        }
+
         $formDataArr = $this->getFormDataArray( $formDataObj );
 
         $template = false;
@@ -154,7 +160,6 @@ class FormHandlerService
             {
                 $subject = $handlerConfigArr['email_subject'];
             }
-// ToDo: subject mapping / static (intl)
         }
 
         $from = false;
@@ -236,7 +241,8 @@ class FormHandlerService
                        'form_data_array' => $formDataArr,
                        'form_data_object' => $formDataObj,
                        'content' => $content,
-                       'location' => $location );
+                       'location' => $location,
+                       'app' => $app );
 
             $bodyTextHtml = $templateContent->renderBlock('body_text_html',
                     $templateParameters
@@ -266,8 +272,8 @@ class FormHandlerService
             {
                 $msgId = substr( $message->getHeaders()->get( 'Message-ID' )->getFieldBody(), 1, -1 );
 
-                //$dump = $message->toString(); <- this is the "real" output sent by the mailer
-                $dump = $msgId."\n\n".$bodyTextPlain.$bodyTextHtml; // <- this is the "clean" uncoded output fetched directly from the template
+//                $dump = $message->toString(); // <- this is the "real" output sent by the mailer
+                $dump = $message->getHeaders()->toString()."\n\n".$bodyTextHtml."\n\n".$bodyTextPlain; // <- this is the "clean" uncoded output fetched directly from the template
 
 //                $dump = str_replace( 'search', '', $message->toString() );
 
@@ -283,7 +289,7 @@ class FormHandlerService
         }
         else
         {
-            if( $debug == true )
+            if( $debug === true )
             {
                 $error =
                     'Error: All parameters ($template, $subject, $from, $to) must be provided <br> <br>
@@ -370,6 +376,11 @@ class FormHandlerService
             $contentType = $keyArr['0'];
             // first_name
             $fieldIdentifier = $keyArr['1'];
+            // ezuser email
+            if ( isset( $keyArr['2'] ) )
+            {
+                $fieldIdentifier = $fieldIdentifier.FormHandlerService::separator.$keyArr['2'];
+            }
 
             $formDataArr[$fieldIdentifier] = array( 'value' => $formValue,
                 'content_type'  => $contentType,

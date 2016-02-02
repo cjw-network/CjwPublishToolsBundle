@@ -110,6 +110,7 @@ user_register_config:
         admin_user_id: 14
         user_contenttype_id: 21
         user_group_id: 60
+        account_status_enabled: true
     handler:
         success:
             handler_class: successHandler

@@ -307,14 +307,18 @@ class FormularController extends Controller
 
                 $newUser = $this->userRegisterHandler( $formDataObj, $locationId, $contentType );
 
+// ToDo: catch "Argument 'userCreateStruct' is invalid: User with provided login already exists" (InvalidArgumentException) exception
+
                 if ( $newUser !== false )
                 {
-                    // ToDo: sucess tpl or login, email exception
-
                     if ( $form->isValid() )
                     {
+                        $app = array();
+                        $app['request'] = $this->request;
+                        $handlerParameters = array( 'content' => $newUser, 'app' => $app );
+
                         // process configured handlers
-                        $response = $this->processHandlers( 'user_register_config:handlers', $form->getData(), array(), $form );
+                        $response = $this->processHandlers( 'user_register_config:handlers', $form->getData(), $handlerParameters, $form );
 
                         if ( $response !== false )
                         {
@@ -486,7 +490,7 @@ class FormularController extends Controller
     }
 
     /**
-     * Handle adding a new user content object adding for user regster action, chnging the owner id to it self, getting the parameters from formbuilder.yml, returns the new user content object
+     * Handle adding a new user content object adding for user regster action, changing the owner id to it self, getting the parameters from formbuilder.yml, returns the new user content object
      *
      * @param mixed $formDataObj
      * @param mixed $contentInfo
@@ -499,14 +503,34 @@ class FormularController extends Controller
     // http://symfony.com/doc/current/cookbook/doctrine/registration_form.html
     private function userRegisterHandler( $formDataObj, $locationId, $contentType )
     {
+        $formParams = $this->formBuilderService->getFormConfigType( 'parameters', 'user_register_config', false );
+
+        if ( array_key_exists( 'admin_user_id', $formParams ) )
+        {
+            $adminUserId = $formParams['admin_user_id'];
+        }
+        else
+        {
+            $adminUserId = 14;
+        }
+
+        if ( array_key_exists( 'account_status_enabled', $formParams ) )
+        {
+            $accountStatusEnabled = $formParams['account_status_enabled'];
+        }
+        else
+        {
+            $accountStatusEnabled = true;
+        }
+
         $object = false;
         $userService = $this->repository->getUserService();
 
         // save current user id
         $currentUserId = $this->repository->getCurrentUser()->content->versionInfo->contentInfo->id;
 
-        // sToDo: read the id from config, et current user to admin user
-        $this->repository->setCurrentUser( $userService->loadUser( 14 ) );
+        // the id from config, et current user to admin user
+        $this->repository->setCurrentUser( $userService->loadUser( $adminUserId ) );
 
         $contentCreateStruct = $this->contentService->newContentCreateStruct( $contentType, $this->initialLanguageCode );
         $object = $this->formBuilderService->buildContentStructWithFormData( $formDataObj, $contentCreateStruct );
@@ -522,6 +546,8 @@ class FormularController extends Controller
                 $this->initialLanguageCode,
                 $contentType
             );
+
+            $userCreateStruct->enabled = $accountStatusEnabled;
 
             $contentStruct = $object['contentStruct'];
             foreach ( $contentStruct->fields as $field )

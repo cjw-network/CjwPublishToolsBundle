@@ -10,7 +10,7 @@
 
 namespace Cjw\PublishToolsBundle\Services;
 
-use Symfony\Component\Form\FormBuilder;
+//use Symfony\Component\Form\FormBuilder;
 use Symfony\Component\Yaml\Yaml;
 //use eZ\Publish\Core\FieldType\XmlText\Input\EzXml as EzXmlInput;
 
@@ -37,7 +37,7 @@ class FormBuilderService
     public function setConfigFile( $configFile )
     {
         // Note that the realpath function will strip the ending "/" from the filename string
-        $ezRootDir = realpath(__DIR__ . '/../../../../' );
+        $ezRootDir = realpath( __DIR__ . '/../../../../' );
 
         if( $configFile )
         {
@@ -139,7 +139,8 @@ class FormBuilderService
 
         $formBuilder->add( 'save', 'submit', array( 'label' => $labelSaveButton ) );
 
-        if( $parameters['button_config']['cancel_button'] !== false )
+        if ( isset( $parameters['button_config']['cancel_button'] )
+             && $parameters['button_config']['cancel_button'] !== false )
         {
             $formBuilder->add( 'cancel', 'submit', array( 'label' => $labelCancelButton, 'attr' => array( 'formnovalidate' => '' ) ) );
         }
@@ -227,7 +228,15 @@ class FormBuilderService
 
                     //var_dump( $field->names );
 
-                    $fieldArr['label']    = $field->names[$languageCode];
+                    if(array_key_exists($languageCode,$field->names))
+                    {
+                        $fieldArr['label'] = $field->names[$languageCode];
+                    }
+                    else
+                    {
+                        $fieldArr['label'] = '';
+                    }
+
                     $fieldArr['required'] = $field->isRequired;
                     $fieldArr['choices']  = false;
 
@@ -347,13 +356,16 @@ class FormBuilderService
                                 {
                                     case 'choice':
                                         // http://stackoverflow.com/questions/17314996/symfony2-array-to-string-conversion-error
-                                        if ( $fieldArr['multiple'] )
-                                        {
-                                            $fieldArr['value'] = $content->getFieldValue( $field->identifier )->selection;
-                                        }
-                                        else
-                                        {
-                                            $fieldArr['value'] = $content->getFieldValue( $field->identifier )->selection['0'];
+                                        if ( $content->getFieldValue( $field->identifier )->selection )
+                                            {
+                                            if ( $fieldArr['multiple'] )
+                                            {
+                                                $fieldArr['value'] = $content->getFieldValue( $field->identifier )->selection;
+                                            }
+                                            else
+                                            {
+                                                $fieldArr['value'] = $content->getFieldValue( $field->identifier )->selection['0'];
+                                            }
                                         }
                                         break;
 
@@ -411,24 +423,44 @@ class FormBuilderService
                     // http://stackoverflow.com/questions/17314996/symfony2-array-to-string-conversion-error
                     if ( is_array( $value ) )
                     {
-                        $contentStruct->setField( $property, $value );
+                        // skip if $value is null because it wont validate
+                        if ( $value['0'] !== null )
+                        {
+                            $contentStruct->setField( $property, $value );
+                        }
                     }
                     else
                     {
-                        $contentStruct->setField( $property, array( $value ) );
+                        // skip if $value is null because it wont validate
+                        if ( $value !== null )
+                        {
+                            $contentStruct->setField( $property, array( $value ) );
+                        }
                     }
                     break;
 
                 case 'ezxml':
-                    $contentStruct->setField( $property, $this->newEzXmltextSchema( $value ) );
+                    // skip if $value is null because it wont validate
+                    if ( $value !== null )
+                    {
+                        $contentStruct->setField( $property, $this->newEzXmltextSchema( $value ) );
+                    }
                     break;
 
                 case 'ezuser':
-                    $ezuser[$keyArr['2']] = $value;
+                    // skip if $value is null because it wont validate
+                    if ( $value !== null )
+                    {
+                        $ezuser[$keyArr['2']] = $value;
+                    }
                     break;
 
                 default:
-                    $contentStruct->setField( $property, $value );
+                    // skip if $value is null because it wont validate
+                    if ( $value !== null )
+                    {
+                        $contentStruct->setField( $property, $value );
+                    }
             }
         }
 

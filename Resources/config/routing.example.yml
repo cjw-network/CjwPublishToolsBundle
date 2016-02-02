@@ -1,6 +1,9 @@
 cjwpublishtools_user_register:
     path:     /register
     defaults: { _controller: CjwPublishToolsBundle:Formular:userRegister }
+cjwpublishtools_user_activate:
+    path:     /activate/{hash}/{id}
+    defaults: { _controller: CjwPublishToolsBundle:UserRegisterActivate:userActivate }
 
 cjwpublishtools_formbuilder:
     pattern:  /form/{identifier}
@@ -9,7 +12,6 @@ cjwpublishtools_formbuilder:
 cjwpublishtools_frontend_editing_edit:
     pattern:  /content/edit/{locationid}
     defaults: { _controller: CjwPublishToolsBundle:Formular:editForm }
-
 cjwpublishtools_frontend_editing_add:
     pattern:  /content/add/{locationid}/{contenttypeid}
     defaults: { _controller: CjwPublishToolsBundle:Formular:addForm }
@@ -19,7 +21,6 @@ cjwpublishtools_sitemaps_sitemap:
     defaults: { _controller: CjwPublishToolsBundle:Sitemaps:sitemap }
     requirements:
         _format: xml
-
 cjwpublishtools_sitemaps_robots:
     pattern: /robots.txt
     defaults: { _controller: CjwPublishToolsBundle:Sitemaps:robots }
