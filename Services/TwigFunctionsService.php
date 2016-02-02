@@ -41,6 +41,7 @@ class TwigFunctionsService extends \Twig_Extension
             new \Twig_SimpleFunction( 'cjw_breadcrumb', array( $this, 'getBreadcrumb' ) ),
             new \Twig_SimpleFunction( 'cjw_treemenu', array( $this, 'getTreemenu' ) ),
             new \Twig_SimpleFunction( 'cjw_load_content_by_id', array( $this, 'loadContentById' ) ),
+            new \Twig_SimpleFunction( 'cjw_load_contentinfo_by_id', array( $this, 'loadContentInfoById' ) ),
             new \Twig_SimpleFunction( 'cjw_fetch_content', array( $this, 'fetchContent' ) ),
             new \Twig_SimpleFunction( 'cjw_user_get_current', array( $this, 'getCurrentUser' ) ),
             new \Twig_SimpleFunction( 'cjw_lang_get_default_code', array( $this, 'getDefaultLangCode' ) ),
@@ -224,6 +225,18 @@ class TwigFunctionsService extends \Twig_Extension
     }
 
     /**
+     * Load contentInfo by contentId.
+     *
+     * @param integer $contentId
+     * @return \eZ\Publish\API\Repository\Values\Content\Content
+     */
+    public function loadContentInfoById( $contentId )
+    {
+        $content = $this->PublishToolsService->loadContentInfoById( $contentId );
+        return $content;
+    }
+
+    /**
      * Returns / find a list of locations / content y search params
      *
      * @param array $locationId
@@ -278,7 +291,7 @@ class TwigFunctionsService extends \Twig_Extension
      *
      * @param mixed $file
      */
-    public function streamFile( $file = false )
+    public function streamFile( $file = false, $contentDisposition = 'attachment' )
     {
         if( $file )
         {
@@ -286,7 +299,7 @@ class TwigFunctionsService extends \Twig_Extension
             header( 'Content-type: '.$file->mimeType );
             header( 'Content-Transfer-Encoding: binary' );
             header( 'Content-Length: '.$file->fileSize );
-            header( 'Content-Disposition: attachment; filename='.$file->fileName );
+            header( 'Content-Disposition: '.$contentDisposition.'; filename='.$file->fileName );
             ob_clean();
             flush();
             readfile( '.'.$file->uri );
