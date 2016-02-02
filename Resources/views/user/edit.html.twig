@@ -1,0 +1,45 @@
+{# this is an usage example, use an override for customizing #}
+
+{% extends site_bundle_name ~ '::pagelayout.html.twig' %}
+
+{% block content %}
+    <div class="class-useredit content-view-full">
+        <h1 class="content-header">Meine Benutzer Daten bearbeiten</h1>
+
+        {{ form_start( form, { 'attr': { 'autocomplete': 'off' } } ) }}
+            {{ form_errors( form ) }}
+
+            {{ form_row( form.ezxform_token ) }}
+
+            <div class="break left halfbox">
+                {{ form_row( form.ezselection___anrede, { 'attr': { 'autocomplete': 'off' } } ) }}
+            </div>
+            <div class="right halfbox">
+                {{ form_row( form.ezstring___titel, { 'attr': { 'autocomplete': 'off' } } ) }}
+            </div>
+            <div class="break left halfbox">
+                {{ form_row( form.ezstring___first_name, { 'attr': { 'autocomplete': 'off', 'required': 'required' } } ) }}
+            </div>
+            <div class="right halfbox">
+                {{ form_row( form.ezstring___last_name, { 'attr': { 'autocomplete': 'off', 'required': 'required' } } ) }}
+            </div>
+            <div class="break left halfbox">
+                {{ form_row( form.ezstring___plz, { 'attr': { 'autocomplete': 'off', 'required': 'required' } } ) }}
+            </div>
+            <div class="right halfbox">
+                {{ form_row( form.ezstring___ort, { 'attr': { 'autocomplete': 'off', 'required': 'required' } } ) }}
+            </div>
+            <div class="break left halfbox">
+                {{ form_row( form.ezstring___strasse_hausnr, { 'attr': { 'autocomplete': 'off', 'required': 'required' } } ) }}
+            </div>
+            <div class="right halfbox"
+                {{ form_row( form.ezstring___telefon, { 'attr': { 'autocomplete': 'off', 'required': 'required' } } ) }}
+            </div>
+
+            {{ form_row( form.cancel ) }}
+            {{ form_row( form.save ) }}
+
+            <div class="break"></div>
+        {{ form_end( form, {'render_rest': false} ) }}
+    </div>
+{% endblock %}

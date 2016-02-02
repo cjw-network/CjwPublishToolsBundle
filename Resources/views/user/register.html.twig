@@ -1,0 +1,62 @@
+{# this is an usage example, use an override for customizing #}
+
+{% extends site_bundle_name ~ '::pagelayout.html.twig' %}
+
+{% block content %}
+    <div class="class-userregister content-view-full">
+        <h1 class="content-header">User Register</h1>
+
+        {# http://symfony.com/doc/current/reference/forms/twig_reference.html #}
+        {{ form_start( form, { 'attr': { 'autocomplete': 'off' } } ) }}
+            {{ form_errors( form ) }}
+
+            {{ form_row( form.ezxform_token ) }}
+
+            <div class="left halfbox">
+                {{ form_row( form.ezuser___user_account___email, { 'attr': { 'autocomplete': 'off', 'required': 'required', 'onchange': "document.getElementById('"~form.ezuser___user_account___login.vars['id']~"').value=this.value;" } } ) }}
+            </div>
+            <div class="right halfbox">
+                <input type="hidden" id="{{form.ezuser___user_account___login.vars['id']}}" name="{{form.ezuser___user_account___login.vars['full_name']}}" />
+            </div>
+            <div class="break left halfbox">
+                {{ form_row( form.ezuser___user_account___password.first, { 'attr': { 'autocomplete': 'off', 'required': 'required', 'type': 'password', 'readonly': 'readonly', 'onfocus': "this.removeAttribute('readonly');" }, 'label': 'Passwort' } ) }}
+            </div>
+            <div class="right halfbox">
+                {{ form_row( form.ezuser___user_account___password.second, { 'attr': { 'autocomplete': 'off', 'required': 'required', 'type': 'password', 'readonly': 'readonly', 'onfocus': "this.removeAttribute('readonly');" }, 'label': 'Passwort (Wiederholung)' } ) }}
+            </div>
+
+            <div class="break"></div>
+            <div class="horiz-ruler"></div>
+
+            <div class="break left halfbox">
+                {{ form_row( form.ezselection___anrede, { 'attr': { 'autocomplete': 'off' } } ) }}
+            </div>
+            <div class="right halfbox">
+                {{ form_row( form.ezstring___titel, { 'attr': { 'autocomplete': 'off' } } ) }}
+            </div>
+            <div class="break left halfbox">
+                {{ form_row( form.ezstring___first_name, { 'attr': { 'autocomplete': 'off', 'required': 'required' } } ) }}
+            </div>
+            <div class="right halfbox">
+                {{ form_row( form.ezstring___last_name, { 'attr': { 'autocomplete': 'off', 'required': 'required' } } ) }}
+            </div>
+            <div class="break left halfbox">
+                {{ form_row( form.ezstring___plz, { 'attr': { 'autocomplete': 'off', 'required': 'required' } } ) }}
+            </div>
+            <div class="right halfbox">
+                {{ form_row( form.ezstring___ort, { 'attr': { 'autocomplete': 'off', 'required': 'required' } } ) }}
+            </div>
+            <div class="break left halfbox">
+                {{ form_row( form.ezstring___strasse_hausnr, { 'attr': { 'autocomplete': 'off', 'required': 'required' } } ) }}
+            </div>
+            <div class="right halfbox">
+                {{ form_row( form.ezstring___telefon, { 'attr': { 'autocomplete': 'off', 'required': 'required' } } ) }}
+            </div>
+
+            {{ form_row( form.save ) }}
+            {{ form_row( form.cancel ) }}
+
+            <div class="break"></div>
+        {{ form_end( form, {'render_rest': false} ) }}
+    </div>
+{% endblock %}

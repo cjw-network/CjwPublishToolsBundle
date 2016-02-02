@@ -107,11 +107,27 @@ frontendediting_config:
 
 user_register_config:
     parameters:
+        template: :user:register.html.twig
         admin_user_id: 14
         user_contenttype_id: 21
         user_group_id: 60
         account_status_enabled: true
+#        account_status_enabled: true
+        button_config:
+            save_button:
+                label:
+                    ger-DE: 'Absenden'
+            cancel_button:
+                redirect:
+                label:
+                    ger-DE: 'Abbrechen'
     handler:
+        sendmail:
+            logging: true
+            debug: false
+            template: ':user:email.html.twig'
+            email_receiver: @user_account___email
+            email_subject: 'Bestätigen Sie ihre Anmeldung'
+#            email_bcc: ToDo
         success:
-            handler_class: successHandler
-            template: :success:register.html.twig
+            template: :user:success.html.twig

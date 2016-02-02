@@ -1,0 +1,35 @@
+{# this is an usage example, use an override for customizing #}
+
+{% block body_text_html %}{% spaceless %}
+    {% set userAccount = ez_field_value( content, 'user_account' ) %}
+    {% set accountKey = userAccount.login ~ userAccount.email ~ userAccount.passwordHash ~ content.contentInfo.modificationDate|date( 'U' ) %}
+
+    <h1>Anmeldung</h1>
+
+    <p>
+        Um Ihre Anmeldung zu best&auml;tigen und Ihr Konto zu Aktivieren, klicken Sie bitte auf folgenden Link:
+    </p>
+
+    <p>
+        <a href="http://{{ app.request.server.get('HTTP_HOST') }}/activate/{{ cjw_hash_md5( accountKey ) }}/{{ content.contentInfo.mainLocationId }}">
+            <b>http://{{ app.request.server.get('HTTP_HOST') }}/activate/{{ cjw_hash_md5( accountKey ) }}/{{ content.contentInfo.mainLocationId }}</b>
+        </a>
+    </p>
+
+    <p>
+        Anschliessend k&ouml;nnen Sie sich mit Ihrer E-Mail Adresse und Ihrem Passwort anmelden.
+    </p>
+{% endspaceless %}{% endblock %}
+
+{% block body_text_plain %}{% spaceless %}
+{% set userAccount = ez_field_value( content, 'user_account' ) %}
+{% set accountKey = userAccount.login ~ userAccount.email ~ userAccount.passwordHash ~ content.contentInfo.modificationDate|date( 'U' ) %}
+Anmeldung
+
+
+Um Ihre Anmeldung zu bestätigen und Ihr Konto zu Aktivieren, klicken Sie bitte auf folgenden Link:
+
+http://{{ app.request.server.get('HTTP_HOST') }}/activate/{{ cjw_hash_md5( accountKey ) }}/{{ content.contentInfo.mainLocationId }}
+
+Anschliessend können Sie sich mit Ihrer E-Mail Adresse und Ihrem Passwort anmelden.
+{% endspaceless %}{% endblock %}

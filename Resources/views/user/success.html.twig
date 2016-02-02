@@ -1,0 +1,23 @@
+{# this is an usage example, use an override for customizing #}
+
+{% extends site_bundle_name ~ '::pagelayout.html.twig' %}
+
+{% block content %}
+    <div class="class-userregister content-view-full">
+        <h1 class="content-header">Ihre Registrierung war erfolgreich.</h1>
+
+        <p>
+            Sie erhalten in Kürze eine Bestätigungs E-Mail mit einem Aktivierungs Link an die von Ihnen angegebene E-Mail Adresse.
+        </p>
+
+        <p>
+            Klicken Sie auf den Aktivierungs Link in der Bestätigungs E-Mail und aktivieren Sie somit Ihr Konto.
+            <br />
+            Anschliessend können Sich sich <a href="{{ path( 'login' ) }}">hier</a> mit dem angegebenen Nutzernamen und Ihrem Passwort anmelden.
+        </p>
+
+        <p>
+            Sollten Sie keine Bestätigungs E-Mail erhalten, dann prüfen Sie bitte auch Ihren Spam Mail Ordner.
+        </p>
+    </div>
+{% endblock %}

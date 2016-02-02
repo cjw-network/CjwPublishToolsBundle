@@ -1,0 +1,23 @@
+{# this is an usage example, use an override for customizing #}
+
+{% extends site_bundle_name ~ '::pagelayout.html.twig' %}
+
+{% block content %}
+    <div class="class-useractivate content-view-full">
+        <h1 class="content-header">Registrierung</h1>
+
+        <p>
+            Die Registrierung für Ihre Mitgliedschaft wurde abgeschlossen.
+        </p>
+
+        <p>
+            Ihr Konto ist jetzt aktiviert.
+        </p>
+
+        <p>
+            Sie können sich jetzt
+            <a href="/login" target="_self"><strong>hier</strong></a>
+            mit Ihrer E-Mail Adresse und Ihrem Passwort anmelden.
+        </p>
+    </div>
+{% endblock %}
