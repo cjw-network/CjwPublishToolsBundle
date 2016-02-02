@@ -53,7 +53,7 @@ class PublishToolsService
     protected $languageService;
 
     /**
-     * @var \eZ\Publish\API\Repository\LanguageService
+     * @var \eZ\Publish\API\Repository\UserService
      */
     protected $userService;
 
@@ -154,9 +154,28 @@ class PublishToolsService
                         $contentId =  $parentLocation->contentInfo->id;
                         $content = $this->loadContentById( $contentId );
 
+                        // Get the default language code for the siteaccess, so we can load the
+                        // correct name by using this language code for getting the "name" fields
+                        // value.
+                        // ToDo: Find a simpler way for getting the correct language. See: vendor/ezsystems/ezpublish-kernel/eZ/Publish/Core/MVC/Symfony/Templating/Twig/Extension/ContentExtension.php:getTranslatedContentName
+                        $languageCode = $this->languageService->getDefaultLanguageCode();
+
+                        // We're getting the name of the object in the language it has been created,
+                        // in other words the language in which the object has been initially
+                        // created
                         $translatedName = $content->versionInfo->getName();
 
-                        //$name = $parentLocation->contentInfo->name;
+                        // Now we're going to get the field value in the default language, by using
+                        // the $languageCode, which we've fetched previously.
+                        $translatedNameTemp = $content->getFieldValue( 'name', $languageCode );
+                        // If the translatedNameTemp has correctly been set, we're going to use the
+                        // text of the field value to get the "real" translated name!
+                        if( isset( $translatedNameTemp ) && is_object( $translatedNameTemp ) )
+                        {
+                            $translatedName = $translatedNameTemp->text;
+                        }
+
+//                        $name = $parentLocation->contentInfo->name;
                         $name = $translatedName;
                     }
 
@@ -228,6 +247,23 @@ class PublishToolsService
     {
         try {
             return $this->contentService->loadContent( $contentId );
+        } catch( \eZ\Publish\API\Repository\Exceptions\UnauthorizedException $error ) {
+            return false;
+        } catch( \eZ\Publish\API\Repository\Exceptions\NotFoundException $error ) {
+            return false;
+        }
+    }
+
+    /**
+     * Load contentInfo by contentId.
+     *
+     * @param integer $contentId ID of the content object
+     * @return \eZ\Publish\API\Repository\Values\Content\Content
+     */
+    public function loadContentInfoById( $contentId )
+    {
+        try {
+            return $this->contentService->loadContentInfo( $contentId );
         } catch( \eZ\Publish\API\Repository\Exceptions\UnauthorizedException $error ) {
             return false;
         } catch( \eZ\Publish\API\Repository\Exceptions\NotFoundException $error ) {
@@ -467,7 +503,7 @@ class PublishToolsService
             foreach ( $params['filter_relations'] as $fieldCriterion )
             {
 // todo check valid syntax
-                if ( is_array( $fieldCriterion ) && count( $fieldCriterion == 3 ) )
+                if ( is_array( $fieldCriterion ) && count( $fieldCriterion ) == 3 )
                 {
                     $criterion[] = new Criterion\FieldRelation( $fieldCriterion['0'], $fieldCriterion['1'], $fieldCriterion['2'] );
                 }
@@ -479,7 +515,7 @@ class PublishToolsService
             foreach ( $params['filter_fields'] as $fieldCriterion )
             {
 // todo check valid syntax
-                if ( is_array( $fieldCriterion ) && count( $fieldCriterion == 3 ) )
+                if ( is_array( $fieldCriterion ) && count( $fieldCriterion ) == 3 )
                 {
                     // Attention! criterion field must set to be searchable
                     $criterion[] = new Criterion\Field( $fieldCriterion['0'], $fieldCriterion['1'], $fieldCriterion['2'] );
@@ -636,7 +672,7 @@ class PublishToolsService
                 $result = new SortClause\ContentName( $sortOrder );
                 break;
             case 'ContentId':
-                $result = new SortClause\Id( $sortOrder );
+                $result = new SortClause\ContentId( $sortOrder );
                 break;
             case 'DateModified':
                 $result = new SortClause\DateModified( $sortOrder );
