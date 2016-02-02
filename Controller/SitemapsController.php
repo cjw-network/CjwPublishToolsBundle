@@ -24,7 +24,9 @@ class SitemapsController extends Controller
         $cacheFileMtime = 0;
         if ( file_exists( $cacheFile ) )
         {
-            $cacheFileMtime = stat( $cacheFile )['mtime'];
+//            $cacheFileMtime = stat( $cacheFile )['mtime'];
+            $cacheFileMtime = stat( $cacheFile );
+            $cacheFileMtime = $cacheFileMtime['mtime'];
         }
 
         if ( $cacheFileMtime < ( time() - $ttl ) )
